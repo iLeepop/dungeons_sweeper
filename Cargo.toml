@@ -1,0 +1,20 @@
+[package]
+name = "dungeons_sweeper"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = []
+debug = ["bevy-inspector-egui"]
+
+[dependencies]
+bevy = "0.16.1"
+
+dungeons_plugin ={ path = "dungeons_plugin"}
+
+bevy-inspector-egui = { version = "0.33.1", optional = true}
+
+[workspace]
+members = [
+    "dungeons_plugin"
+]
