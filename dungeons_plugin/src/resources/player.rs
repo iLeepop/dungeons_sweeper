@@ -1,5 +1,5 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Resource)]
+#[derive(Resource)]
 pub struct Player {
 }

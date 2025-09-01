@@ -2,10 +2,10 @@ use bevy::prelude::*;
 use std::fmt::{self, Display, Formatter};
 use std::ops::{Add, Sub};
 
-#[derive(Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component)]
 pub struct Coordinates {
-    pub x: u16,
-    pub y: u16,
+    pub x: u32,
+    pub y: u32,
 }
 
 impl Add for Coordinates {
@@ -23,8 +23,8 @@ impl Add<(i8, i8)> for Coordinates {
     type Output = Self;
 
     fn add(self, (x, y): (i8, i8)) -> Self::Output {
-        let x = ((self.x as i16) + x as i16) as u16;
-        let y = ((self.y as i16) + y as i16) as u16;
+        let x = ((self.x as i16) + x as i16) as u32;
+        let y = ((self.y as i16) + y as i16) as u32;
         Self { x, y }
     }
 }

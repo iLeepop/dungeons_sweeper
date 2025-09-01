@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Resource)]
+#[derive(Resource)]
 pub struct Level {
     rate: f32,
 }
