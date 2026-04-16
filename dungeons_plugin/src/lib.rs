@@ -1,6 +1,8 @@
 mod components;
 mod resources;
 mod systems;
+mod events;
+mod utils;
 
 use bevy::{ecs::system::command, prelude::*};
 use bevy::log;
