@@ -1,4 +1,9 @@
 pub mod uncover;
 pub mod coordinates;
-pub mod entity_data;
 pub mod player_ui;
+pub mod player;
+pub mod enemy;
+pub mod health;
+pub mod defense;
+pub mod damage;
+pub mod view;

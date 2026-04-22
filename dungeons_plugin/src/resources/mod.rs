@@ -4,3 +4,6 @@ pub mod board;
 pub mod tile;
 pub mod tile_map;
 pub mod level;
+pub mod view2d;
+pub mod board_option;
+pub mod camera_position;
