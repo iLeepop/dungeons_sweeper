@@ -13,6 +13,7 @@ pub struct Board {
     pub tile_size: TileSize,
     pub bounds: Bounds2,
     pub tiles: HashMap<Coordinates, Entity>,
+    pub uncovers: HashMap<Coordinates, Entity>,
     pub board_entity: Option<Entity>,
 }
 

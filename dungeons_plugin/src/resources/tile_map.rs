@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::ops::{Deref, DerefMut};
 use rand::{rng, Rng};
 
-use crate::{components::coordinates::Coordinates, resources::tile::Tile};
+use crate::{components::coordinates::Coordinates, resources::tile::{Tile, EnemyType}};
 
 #[derive(Resource)]
 pub struct TileMap {
@@ -87,7 +87,7 @@ impl TileMap {
                 rng.random_range(0..self.height) as usize,
             );
             if let Tile::Grass = self[y][x] {
-                self[y][x] = Tile::Monster;
+                self[y][x] = Tile::Enemy(EnemyType::random());
                 remaining_monster -= 1;
             }
         }
