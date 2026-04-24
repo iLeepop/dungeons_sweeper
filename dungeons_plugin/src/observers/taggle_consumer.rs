@@ -1,6 +1,19 @@
 use bevy::prelude::*;
+use bevy::log;
 use bevy::ecs::observer::On;
 
+use crate::components::{
+    Coordinates, 
+    Enemy, 
+    EnemyNeighbor, 
+    Grass, 
+    Item, 
+    OutWay,
+    Damage,
+    Defense,
+    Health,
+    Uncover,
+};
 use crate::events::taggle::ToggleEvent;
 use crate::resources::board::Board;
 
@@ -8,12 +21,58 @@ pub fn taggle_consumer(
     event: On<ToggleEvent>,
     mut commands: Commands,
     mut board: ResMut<Board>,
+    tile_type: Query<(Option<&Enemy>, Option<&EnemyNeighbor>, Option<&Grass>, Option<&Item>, Option<&OutWay>)>,
+    status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>
 ) {
     // if let Some(tile) = board.tiles.get(&event.0) {
     //     commands.entity(*tile).despawn();
     // }
-    if let Some(cover) = board.uncovers.get(&event.0) {
-        commands.entity(*cover).despawn();
-        board.uncovers.remove(&event.0);
+    if let Some(cover) = board.covers.get(&event.0) {
+        #[cfg(feature = "debug")]
+        log::info!("despawn cover: {:?}", *cover);
+        commands.entity(*cover).insert(Uncover);
+        board.covers.remove(&event.0);
+        return;
+    }
+    if let Some(tile) = board.tiles.get(&event.0) {
+        #[cfg(feature = "debug")]
+        log::info!("despawn tile: {:?}", *tile);
+
+        let (enemy, enemy_neighbor, grass, item, out_way) = match tile_type.get(*tile) {
+            Ok(v) => v,
+            Err(e) => {
+                log::error!("Error getting tile: {:?}", e);
+                return;
+            },
+        };
+
+        if enemy.is_some() {
+            // 获取属性组件
+            let (health, damage, defense) = match status.get(*tile) {
+                Ok(v) => v,
+                Err(e) => {
+                    log::error!("Error getting status: {:?}", e);
+                    return;
+                },
+            };
+            let damage = damage.unwrap().0;
+            log::info!("you get hurt by enemy {} damage", damage);
+        }
+
+        if enemy_neighbor.is_some() {
+            log::info!("you get on enemy neighbor");
+        }
+
+        if grass.is_some() {
+            log::info!("you get on grass wuth health increase");
+        }
+
+        if item.is_some() {
+            log::info!("you get item");
+        }
+
+        if out_way.is_some() {
+            log::info!("you get out way");
+        }
     }
 }

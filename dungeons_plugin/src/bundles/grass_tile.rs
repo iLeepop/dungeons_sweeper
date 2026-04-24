@@ -2,36 +2,26 @@ use bevy::prelude::*;
 use bevy::ecs::bundle::Bundle;
 
 use crate::components::coordinates::Coordinates;
+use crate::components::grass::Grass;
 use crate::resources::board_option::TileSize;
-use crate::resources::enemy_assets::EnemyAssets;
 
-pub fn normal_bundle(
+pub fn grass_bundle(
     coord: Coordinates, 
     tile_size: TileSize, 
     padding: u32, 
     board_size: Vec3, 
-    enemy_assets: &EnemyAssets,
 ) -> impl Bundle {
     return (
         Name::new(format!("Tile_{}", coord)),
         Transform::from_xyz((coord.x as f32 * tile_size.width as f32 + tile_size.width as f32 / 2.0) - (board_size.x as f32 / 2.0), (coord.y as f32 * tile_size.height as f32 + tile_size.height as f32 / 2.0) - (board_size.y as f32 / 2.0), 1.0),
         Sprite {
-            color: Color::srgb(40.0, 0.0, 30.0),
+            color: Color::srgb(0.0, 90.0, 0.0),
             custom_size: Some(Vec2::new((tile_size.width - padding) as f32, (tile_size.height - padding) as f32)),
             ..Default::default()
         },
         coord,
+        Grass,
         children![
-            (
-                Sprite::from_atlas_image(
-                    enemy_assets.texture.clone(),
-                    TextureAtlas { 
-                        layout: enemy_assets.atlas_layout.clone(), 
-                        index: 0 
-                    }
-                ),
-                Transform::from_scale(Vec3::new(0.5, 0.5, 1.0)),
-            )
         ]
     )
 }

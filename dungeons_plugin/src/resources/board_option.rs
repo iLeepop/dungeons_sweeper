@@ -11,6 +11,7 @@ pub struct BoardOption {
     pub map_size: (u32, u32),
     pub tile_size: TileSize,
     pub padding: u32,
+    pub counter_font: Handle<Font>,
     pub monster_count: u16,
     pub treasure_count: u16,
 }
@@ -27,6 +28,7 @@ impl Default for BoardOption {
             map_size: (10, 10), 
             tile_size: TileSize::default(), 
             padding: 0,
+            counter_font: Handle::default(),
             monster_count: 10, 
             treasure_count: 10,
         }
@@ -34,16 +36,6 @@ impl Default for BoardOption {
 }
 
 impl BoardOption {
-    pub fn new(map_size: (u32, u32), tile_size: TileSize, padding: u32, monster_count: u16, treasure_count: u16) -> Self {
-        BoardOption { 
-            map_size, 
-            tile_size, 
-            padding,
-            monster_count, 
-            treasure_count,
-        }
-    }
-
     pub fn map_size(&self) -> (u32, u32) {
         self.map_size
     }

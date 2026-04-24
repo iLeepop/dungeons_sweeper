@@ -30,6 +30,26 @@ impl EnemyType {
         let mut rng = rand::rng();
         [Eye, MagicEye, Swamp, BlueGiant, RedGiant, Yeti, EliteYeti, Cyclops, Gonin, DoubleGonin, TinyMush, BigMush, MushMan, Slim, EliteSlim].choose(&mut rng).unwrap().clone()
     }
+
+    pub fn health(&self) -> u8 {
+        match self {
+            EnemyType::Eye => 1,
+            EnemyType::MagicEye => 2,
+            EnemyType::Swamp => 3,
+            EnemyType::BlueGiant => 4,
+            EnemyType::RedGiant => 5,
+            EnemyType::Yeti => 6,
+            EnemyType::EliteYeti => 7,
+            EnemyType::Cyclops => 8,
+            EnemyType::Gonin => 9,
+            EnemyType::DoubleGonin => 10,
+            EnemyType::TinyMush => 11,
+            EnemyType::BigMush => 12,
+            EnemyType::MushMan => 13,
+            EnemyType::Slim => 14,
+            EnemyType::EliteSlim => 15
+        }
+    }
 }
 
 impl Display for EnemyType {
@@ -58,6 +78,7 @@ impl Display for EnemyType {
 pub enum Tile {
     Grass,
     Enemy(EnemyType),
+    EnemyNeighbor(u8),
     Treasure,
     OutWay,
 }
@@ -76,6 +97,7 @@ impl Tile {
             match self {
                 Tile::Grass => "G".normal(),
                 Tile::Enemy(enemy_type) => format!("E({})", enemy_type).bright_red(),
+                Tile::EnemyNeighbor(count) => format!("N({})", count).bright_blue(),
                 Tile::Treasure => "T".yellow(),
                 Tile::OutWay => "#".normal(),
             }

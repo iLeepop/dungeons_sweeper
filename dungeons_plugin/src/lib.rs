@@ -21,7 +21,7 @@ use crate::resources::board::Board;
 use crate::resources::view2d::View2d;
 use crate::components::coordinates::Coordinates;
 use crate::components::view::View;
-use crate::bundles::normal_bundle;
+use crate::bundles::{out_way_bundle, grass_bundle, enemy_bundle, item_bundle, enemy_neighbor_bundle, cover};
 use crate::resources::board_option::{BoardOption, TileSize};
 use crate::resources::enemy_option::EnemyOption;
 use crate::utils::bounds::Bounds2;
@@ -51,6 +51,10 @@ impl Plugin for DungeonsPlugin {
                 systems::input::input_handler,
                 systems::input::keyboard_input_handler,
             ).chain(),
+        )
+        .add_systems(
+            PostUpdate,
+            systems::toggle::uncover_tile,
         )
         .add_observer(
             observers::taggle_consumer::taggle_consumer,
@@ -91,8 +95,7 @@ impl DungeonsPlugin {
     pub fn create_board(
         mut commands: Commands,
         board_options: Res<BoardOption>,
-        enemy_options: Res<EnemyOption>,
-        sprites: Res<EnemyAssets>,
+        enemy_assets: Res<EnemyAssets>,
     ) {
         let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
         tile_map.set_additem(board_options.monster_count, board_options.treasure_count);
@@ -109,7 +112,7 @@ impl DungeonsPlugin {
 
         let mut tiles = HashMap::new();
 
-        let mut uncovers = HashMap::new();
+        let mut covers = HashMap::new();
 
         let board_entity = commands.spawn((
             Name::new("Board"),
@@ -131,11 +134,11 @@ impl DungeonsPlugin {
                 &tile_map, 
                 tile_size, 
                 padding, 
+                &board_options.counter_font,
                 &mut tiles, 
-                &mut uncovers,
+                &mut covers,
                 board_size,
-                &sprites,
-                &enemy_options,
+                &enemy_assets,
             );
         })
         .id();
@@ -148,7 +151,7 @@ impl DungeonsPlugin {
                 size: board_size.xy(),
             },
             tiles,
-            uncovers,
+            covers,
             board_entity: Some(board_entity),
         });
     }
@@ -158,41 +161,121 @@ impl DungeonsPlugin {
         tile_map: &TileMap,
         tile_size: TileSize,
         padding: u32,
+        counter_font: &Handle<Font>,
         tiles: &mut HashMap<Coordinates, Entity>,
-        uncovers: &mut HashMap<Coordinates, Entity>,
+        covers: &mut HashMap<Coordinates, Entity>,
         board_size: Vec3,
-        sprites: &EnemyAssets,
-        enemy_options: &EnemyOption,
+        enemy_assets: &EnemyAssets,
     ) {
-        for x in 0..tile_map.width() {
-            for y in 0..tile_map.height() {
-                let coord = Coordinates { x, y };
-                tiles.insert(
-                    coord, 
-                    commands.spawn(     
-                        normal_bundle(
+        for (y, line) in tile_map.tiles().iter().enumerate() {
+            for (x, tile) in line.iter().enumerate() {
+                let coord = Coordinates { x: x as u32, y: y as u32 };
+                match tile {
+                    Tile::OutWay => {
+                        tiles.insert(
                             coord, 
-                            tile_size, 
-                            padding, 
-                            board_size, 
-                            &sprites,
-                            enemy_options,
-                            uncovers,
-                        )
-                    )
-                    .with_children(|parent| {
-                        let cover = parent.spawn((
-                            Sprite {
-                                color: Color::WHITE,
-                                custom_size: Some(Vec2::new((tile_size.width - padding) as f32, (tile_size.height - padding) as f32)),
-                                ..Default::default()
-                            },
-                            Transform::from_xyz(0.0, 0.0, 2.0),
-                        )).id();
-                        uncovers.insert(coord, cover);
-                    })
-                    .id()
-                );
+                            commands.spawn(
+                                out_way_bundle(
+                                    coord, 
+                                    tile_size, 
+                                    padding, 
+                                    board_size,
+                                )
+                            )
+                            .with_children(|parent| {
+                                let cover = parent.spawn(
+                                    cover(tile_size, padding)
+                                ).id();
+                                covers.insert(coord, cover);
+                            })
+                            .id()
+                        );
+                    },
+                    Tile::Grass => {
+                        tiles.insert(
+                            coord, 
+                            commands.spawn(
+                                grass_bundle(
+                                    coord, 
+                                    tile_size, 
+                                    padding, 
+                                    board_size, 
+                                )
+                            )
+                            .with_children(|parent| {
+                                let cover = parent.spawn(
+                                    cover(tile_size, padding)
+                                ).id();
+                                covers.insert(coord, cover);
+                            })
+                            .id()
+                        );
+                    },
+                    Tile::Enemy(enemy_type) => {
+                        tiles.insert(
+                            coord, 
+                            commands.spawn(
+                                enemy_bundle(
+                                    coord, 
+                                    tile_size, 
+                                    padding, 
+                                    board_size, 
+                                    &enemy_assets,
+                                    *enemy_type,
+                                )
+                            )
+                            .with_children(|parent| {
+                                let cover = parent.spawn(
+                                    cover(tile_size, padding)
+                                ).id();
+                                covers.insert(coord, cover);
+                            })
+                            .id()
+                        );
+                    },
+                    Tile::EnemyNeighbor(count) => {
+                        tiles.insert(
+                            coord, 
+                            commands.spawn(
+                                enemy_neighbor_bundle(
+                                    coord, 
+                                    tile_size, 
+                                    padding, 
+                                    board_size, 
+                                    *count,
+                                    counter_font,
+                                )
+                            )
+                            .with_children(|parent| {
+                                let cover = parent.spawn(
+                                    cover(tile_size, padding)
+                                ).id();
+                                covers.insert(coord, cover);
+                            })
+                            .id()
+                        );
+                    },
+                    Tile::Treasure => {
+                        tiles.insert(
+                            coord, 
+                            commands.spawn(
+                                item_bundle(
+                                    coord, 
+                                    tile_size, 
+                                    padding, 
+                                    board_size, 
+                                )
+                            )
+                            .with_children(|parent| {
+                                let cover = parent.spawn(
+                                    cover(tile_size, padding)
+                                ).id();
+                                covers.insert(coord, cover);
+                            })
+                            .id()
+                        );
+                    },
+                }
             }
         }
     }

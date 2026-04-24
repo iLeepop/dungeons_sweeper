@@ -1,8 +1,4 @@
 use bevy::prelude::*;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-pub struct Enemy {
-    pub health: u8,
-    pub damage: u8,
-    pub defense: u8,
-}
+pub struct OutWay;

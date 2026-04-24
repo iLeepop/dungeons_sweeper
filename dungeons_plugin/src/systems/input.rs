@@ -22,9 +22,9 @@ pub fn input_handler(
         };
         let camera_position = view2d.position;
         let coordinates = board.on_board_position(window, position, camera_position);
-        #[cfg(feature = "debug")]
-        log::info!("coordinates: {:?}", coordinates);
         if let Some(coordinates) = coordinates {
+            #[cfg(feature = "debug")]
+            log::info!("coordinates: {:?}", coordinates);
             commands.trigger(ToggleEvent(coordinates));
         }
     } else if input.just_pressed(MouseButton::Right) {

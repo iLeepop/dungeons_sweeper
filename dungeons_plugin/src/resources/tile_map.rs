@@ -4,6 +4,12 @@ use rand::{rng, Rng};
 
 use crate::{components::coordinates::Coordinates, resources::tile::{Tile, EnemyType}};
 
+const SQUARE_COORDINATES: [(i8, i8); 8] = [
+    (-1, -1), (0, -1), (1, -1),
+    (-1, 0),          (1, 0),
+    (-1, 1), (0, 1), (1, 1),
+];
+
 #[derive(Resource)]
 pub struct TileMap {
     monster_count: u16,
@@ -74,6 +80,28 @@ impl TileMap {
         self.height
     }
 
+    pub fn tiles(&self) -> &Vec<Vec<Tile>> {
+        &self.tiles
+    }
+
+    pub fn safe_square_at(&self, coordinates: Coordinates) -> impl Iterator<Item = Coordinates> {
+        SQUARE_COORDINATES
+            .iter()
+            .copied()
+            .map(move |tuple| coordinates + tuple)
+    }
+
+    pub fn enemy_health_at(&self, coordinates: Coordinates) -> u8 {
+        self.safe_square_at(coordinates)
+            .filter_map(|coord| self.get_tile(coord).map(|tile| match tile {
+                Tile::Enemy(enemy_type) => {
+                    enemy_type.health()
+                },
+                _ => 0,
+            }))
+            .sum()
+    }
+
     pub fn set_additem(&mut self, monster_count: u16, treasure_count: u16) {
         self.monster_count = monster_count;
         self.treasure_count = treasure_count;
@@ -109,6 +137,17 @@ impl TileMap {
             if let Tile::Grass = self[y][x] {
                 self[y][x] = Tile::OutWay;
                 one_way_out -= 1;
+            }
+        }
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let coord = Coordinates { x: y, y: x };
+                if let Tile::Grass = self[y as usize][x as usize] {
+                    let health = self.enemy_health_at(coord);
+                    if health > 0 {
+                        self[y as usize][x as usize] = Tile::EnemyNeighbor(health);
+                    }
+                }
             }
         }
     }
