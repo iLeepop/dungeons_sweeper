@@ -2,5 +2,5 @@ use bevy::prelude::*;
 
 #[derive(Resource)]
 pub struct Level {
-    rate: f32,
+    _rate: f32,
 }

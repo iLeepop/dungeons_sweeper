@@ -12,6 +12,8 @@ pub struct BoardOption {
     pub tile_size: TileSize,
     pub padding: u32,
     pub counter_font: Handle<Font>,
+    pub safe_count: u16,
+    pub out_way_count: u16,
     pub monster_count: u16,
     pub treasure_count: u16,
 }
@@ -29,6 +31,8 @@ impl Default for BoardOption {
             tile_size: TileSize::default(), 
             padding: 0,
             counter_font: Handle::default(),
+            safe_count: 1,
+            out_way_count: 1,
             monster_count: 10, 
             treasure_count: 10,
         }
@@ -46,6 +50,10 @@ impl BoardOption {
 
     pub fn padding(&self) -> u32 {
         self.padding
+    }
+
+    pub fn safe_count(&self) -> u16 {
+        self.safe_count
     }
 
     pub fn monster_count(&self) -> u16 {

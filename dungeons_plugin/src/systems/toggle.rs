@@ -11,7 +11,7 @@ pub fn uncover_tile(
     for (entity, parent) in children.iter() {
         commands.entity(entity).despawn();
 
-        let (coordinates, enemy, enemy_neighbor, grass, item, out_way) = match query.get(parent.0) {
+        let (_coordinates, enemy, enemy_neighbor, grass, item, out_way) = match query.get(parent.0) {
             Ok(v) => v,
             Err(e) => {
                 log::error!("Error getting tile: {:?}", e);

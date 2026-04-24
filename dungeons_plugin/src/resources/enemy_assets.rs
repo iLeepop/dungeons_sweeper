@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use std::collections::HashMap;
 
-use crate::resources::tile::EnemyType;
+use crate::resources::enemy_type::EnemyType;
 
 #[derive(Resource)]
 pub struct EnemyAssets {

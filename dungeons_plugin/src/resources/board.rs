@@ -40,7 +40,7 @@ impl Board {
         Some(Coordinates { x: x as u32, y: y as u32 })
     }
 
-    pub fn try_uncover_tile(&mut self, coord: Coordinates) {
+    pub fn try_uncover_tile(&mut self, _coord: Coordinates) {
 
     }
 

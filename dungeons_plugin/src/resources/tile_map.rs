@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::ops::{Deref, DerefMut};
 use rand::{rng, Rng};
 
-use crate::{components::coordinates::Coordinates, resources::tile::{Tile, EnemyType}};
+use crate::{components::coordinates::Coordinates, resources::{tile::Tile, enemy_type::EnemyType}};
 
 const SQUARE_COORDINATES: [(i8, i8); 8] = [
     (-1, -1), (0, -1), (1, -1),
@@ -12,6 +12,8 @@ const SQUARE_COORDINATES: [(i8, i8); 8] = [
 
 #[derive(Resource)]
 pub struct TileMap {
+    safe_count: u16,
+    out_way_count: u16,
     monster_count: u16,
     treasure_count: u16,
     width: u32,
@@ -29,6 +31,8 @@ impl TileMap {
     pub fn new(width: u32, height: u32) -> Self {
         let tiles = vec![vec![Tile::default(); height as usize]; width as usize];
         TileMap {
+            safe_count: 0,
+            out_way_count: 0,
             monster_count: 0,
             treasure_count: 0,
             width,
@@ -102,12 +106,15 @@ impl TileMap {
             .sum()
     }
 
-    pub fn set_additem(&mut self, monster_count: u16, treasure_count: u16) {
+    pub fn set_additem(&mut self, safe_count: u16, out_way_count: u16, monster_count: u16, treasure_count: u16) {
         self.monster_count = monster_count;
         self.treasure_count = treasure_count;
+        self.safe_count = safe_count;
+        self.out_way_count = out_way_count;
         let mut remaining_monster = monster_count;
         let mut remaining_treasure = treasure_count;
-        let mut one_way_out = 1;
+        let mut one_way_out = out_way_count;
+        let mut safe_count = safe_count;
         let mut rng = rng();
         while remaining_monster > 0 {
             let (x, y) = (
@@ -137,6 +144,16 @@ impl TileMap {
             if let Tile::Grass = self[y][x] {
                 self[y][x] = Tile::OutWay;
                 one_way_out -= 1;
+            }
+        }
+        while safe_count > 0 {
+            let (x, y) = (
+                rng.random_range(0..self.width) as usize,
+                rng.random_range(0..self.height) as usize,
+            );
+            if let Tile::Grass = self[y][x] {
+                self[y][x] = Tile::Safe;
+                safe_count -= 1;
             }
         }
         for y in 0..self.height {

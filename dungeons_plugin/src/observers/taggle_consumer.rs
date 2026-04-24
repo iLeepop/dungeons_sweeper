@@ -2,8 +2,8 @@ use bevy::prelude::*;
 use bevy::log;
 use bevy::ecs::observer::On;
 
+use crate::components::Exposed;
 use crate::components::{
-    Coordinates, 
     Enemy, 
     EnemyNeighbor, 
     Grass, 
@@ -22,7 +22,8 @@ pub fn taggle_consumer(
     mut commands: Commands,
     mut board: ResMut<Board>,
     tile_type: Query<(Option<&Enemy>, Option<&EnemyNeighbor>, Option<&Grass>, Option<&Item>, Option<&OutWay>)>,
-    status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>
+    status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>,
+    parent: Query<&ChildOf>,
 ) {
     // if let Some(tile) = board.tiles.get(&event.0) {
     //     commands.entity(*tile).despawn();
@@ -30,6 +31,14 @@ pub fn taggle_consumer(
     if let Some(cover) = board.covers.get(&event.0) {
         #[cfg(feature = "debug")]
         log::info!("despawn cover: {:?}", *cover);
+        let parent = match parent.get(*cover) {
+            Ok(v) => v,
+            Err(e) => {
+                log::error!("Error getting parent: {:?}", e);
+                return;
+            },
+        };
+        commands.entity(parent.0).insert(Exposed);
         commands.entity(*cover).insert(Uncover);
         board.covers.remove(&event.0);
         return;
@@ -48,7 +57,7 @@ pub fn taggle_consumer(
 
         if enemy.is_some() {
             // 获取属性组件
-            let (health, damage, defense) = match status.get(*tile) {
+            let (_health, damage, _defense) = match status.get(*tile) {
                 Ok(v) => v,
                 Err(e) => {
                     log::error!("Error getting status: {:?}", e);
@@ -74,5 +83,7 @@ pub fn taggle_consumer(
         if out_way.is_some() {
             log::info!("you get out way");
         }
+
+
     }
 }

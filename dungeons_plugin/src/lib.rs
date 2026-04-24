@@ -8,24 +8,21 @@ mod bundles;
 
 use std::collections::HashMap;
 
-use bevy::{ecs::system::command, prelude::*};
-use bevy::ecs::bundle::Bundle;
-use bevy::log;
+use bevy::prelude::*;
 
 use crate::resources::enemy_assets::EnemyAssets;
 #[cfg(feature = "debug")]
-use crate::resources::tile;
 use crate::resources::tile_map::TileMap;
 use crate::resources::tile::Tile;
 use crate::resources::board::Board;
 use crate::resources::view2d::View2d;
 use crate::components::coordinates::Coordinates;
 use crate::components::view::View;
-use crate::bundles::{out_way_bundle, grass_bundle, enemy_bundle, item_bundle, enemy_neighbor_bundle, cover};
+use crate::bundles::{cover, enemy_bundle, enemy_neighbor_bundle, grass_bundle, item_bundle, out_way_bundle, player_bundle, safe_bundle};
 use crate::resources::board_option::{BoardOption, TileSize};
-use crate::resources::enemy_option::EnemyOption;
 use crate::utils::bounds::Bounds2;
-use crate::resources::tile::EnemyType;
+use crate::observers::{enemy_havier_handler, player_action, taggle_consumer, view_move_consumer};
+use crate::systems::{input_handler, keyboard_input_handler, uncover_tile};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum AppState {
@@ -42,25 +39,32 @@ impl Plugin for DungeonsPlugin {
             OnEnter(AppState::PreGame),
             (
                         Self::setup_camera,
+                        Self::setup_player,
                         Self::create_board
                     ).chain(),
         )
         .add_systems(
             Update,
             (
-                systems::input::input_handler,
-                systems::input::keyboard_input_handler,
+                input_handler,
+                keyboard_input_handler,
             ).chain(),
         )
         .add_systems(
             PostUpdate,
-            systems::toggle::uncover_tile,
+            uncover_tile,
         )
         .add_observer(
-            observers::taggle_consumer::taggle_consumer,
+            taggle_consumer,
         )
         .add_observer(
-            observers::view_move_consumer::view_move_consumer,
+            view_move_consumer,
+        )
+        .add_observer(
+            enemy_havier_handler,
+        )
+        .add_observer(
+            player_action,
         );
     }
 }
@@ -92,13 +96,21 @@ impl DungeonsPlugin {
         });
     }
 
+    pub fn setup_player(
+        mut commands: Commands,
+    ) {
+        commands.spawn(
+            player_bundle(),
+        );
+    }
+
     pub fn create_board(
         mut commands: Commands,
         board_options: Res<BoardOption>,
         enemy_assets: Res<EnemyAssets>,
     ) {
         let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
-        tile_map.set_additem(board_options.monster_count, board_options.treasure_count);
+        tile_map.set_additem(board_options.safe_count, board_options.out_way_count, board_options.monster_count, board_options.treasure_count);
         #[cfg(feature = "debug")]
         println!("{}", tile_map.console_output());
 
@@ -171,6 +183,20 @@ impl DungeonsPlugin {
             for (x, tile) in line.iter().enumerate() {
                 let coord = Coordinates { x: x as u32, y: y as u32 };
                 match tile {
+                    Tile::Safe => {
+                        tiles.insert(
+                            coord, 
+                            commands.spawn(
+                                safe_bundle(
+                                    coord, 
+                                    tile_size, 
+                                    padding, 
+                                    board_size, 
+                                )
+                            )
+                            .id()
+                        );
+                    }
                     Tile::OutWay => {
                         tiles.insert(
                             coord, 

@@ -1,4 +1,3 @@
-use bevy::render::render_resource::Texture;
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_egui::EguiPlugin;
 
@@ -7,7 +6,7 @@ use std::collections::HashMap;
 use dungeons_plugin::{AppState, DungeonsPlugin};
 use dungeons_plugin::resources::board_option::{BoardOption, TileSize};
 use dungeons_plugin::resources::enemy_assets::EnemyAssets;
-use dungeons_plugin::resources::tile::EnemyType;
+use dungeons_plugin::resources::enemy_type::EnemyType;
 
 fn main() {
     let mut app = App::new();
@@ -49,8 +48,10 @@ fn setup_board_options(
         tile_size: TileSize { width: 35, height: 35 },
         padding: 1,
         counter_font: counter_font,
-        monster_count: 1,
-        treasure_count: 10,
+        safe_count: 1,
+        out_way_count: 1,
+        monster_count: 5,
+        treasure_count: 3,
     });
 
     // 加载资源

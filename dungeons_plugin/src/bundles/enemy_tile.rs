@@ -5,10 +5,12 @@ use crate::components::{
     Coordinates,
     Enemy,
     Damage,
+    Defense,
+    Health,
 };
 use crate::resources::board_option::TileSize;
 use crate::resources::enemy_assets::EnemyAssets;
-use crate::resources::tile::EnemyType;
+use crate::resources::enemy_type::EnemyType;
 
 pub fn enemy_bundle(
     coord: Coordinates, 
@@ -31,12 +33,10 @@ pub fn enemy_bundle(
             ..Default::default()
         },
         coord,
-        Enemy {
-            health: 10,
-            damage: 1,
-            defense: 1,
-        },
-        Damage(1),
+        Enemy,
+        Health(enemy_type.health()),
+        Damage(enemy_type.damage()),
+        Defense(enemy_type.defense()),
         children![
             (
                 Sprite::from_atlas_image(

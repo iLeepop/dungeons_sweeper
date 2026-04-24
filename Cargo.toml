@@ -10,7 +10,7 @@ debug = ["dungeons_plugin/debug", "bevy-inspector-egui"]
 [dependencies]
 bevy = "0.18.1"
 
-dungeons_plugin ={ path = "dungeons_plugin"}
+dungeons_plugin = { path = "dungeons_plugin"}
 
 bevy-inspector-egui = { version = "0.36.0", optional = true}
 bevy_egui = "0.39.1"
