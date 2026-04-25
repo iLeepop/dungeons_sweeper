@@ -9,6 +9,6 @@ pub fn cover(tile_size: TileSize, padding: u32) -> impl Bundle {
             custom_size: Some(Vec2::new((tile_size.width - padding) as f32, (tile_size.height - padding) as f32)),
             ..Default::default()
         },
-        Transform::from_xyz(0.0, 0.0, 2.0),
+        Transform::from_xyz(0.0, 0.0, 3.0),
     )
 }

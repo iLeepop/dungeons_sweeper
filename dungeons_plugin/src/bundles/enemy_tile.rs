@@ -17,8 +17,8 @@ pub fn enemy_bundle(
     tile_size: TileSize, 
     padding: u32, 
     board_size: Vec3, 
-    enemy_assets: &EnemyAssets,
-    enemy_type: EnemyType,
+    enemy_assets: &EnemyAssets, 
+    enemy_type: EnemyType, 
 ) -> impl Bundle {
     let index = match enemy_assets.enemy_atlas_layout.get(&enemy_type) {
         Some(index) => *index as usize,
@@ -46,7 +46,11 @@ pub fn enemy_bundle(
                         index: index,
                     }
                 ),
-                Transform::from_scale(Vec3::new(0.5, 0.5, 2.0)),
+                Transform {
+                    scale: Vec3::new(0.5, 0.5, 0.0),
+                    translation: Vec3::new(0.0, 0.0, 2.0),
+                    ..Default::default()
+                }
             )
         ]
     )
