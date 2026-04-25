@@ -95,7 +95,7 @@ impl TileMap {
             .map(move |tuple| coordinates + tuple)
     }
 
-    pub fn enemy_health_at(&self, coordinates: Coordinates) -> u8 {
+    pub fn enemy_health_at(&self, coordinates: Coordinates) -> i8 {
         self.safe_square_at(coordinates)
             .filter_map(|coord| self.get_tile(coord).map(|tile| match tile {
                 Tile::Enemy(enemy_type) => {
@@ -162,7 +162,7 @@ impl TileMap {
                 if let Tile::Grass = self[y as usize][x as usize] {
                     let health = self.enemy_health_at(coord);
                     if health > 0 {
-                        self[y as usize][x as usize] = Tile::EnemyNeighbor(health);
+                        self[y as usize][x as usize] = Tile::EnemyNeighbor(health as u8);
                     }
                 }
             }

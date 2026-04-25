@@ -28,7 +28,7 @@ impl EnemyType {
         [Eye, MagicEye, Swamp, BlueGiant, RedGiant, Yeti, EliteYeti, Cyclops, Gonin, DoubleGonin, TinyMush, BigMush, MushMan, Slim, EliteSlim].choose(&mut rng).unwrap().clone()
     }
 
-    pub fn health(&self) -> u8 {
+    pub fn health(&self) -> i8 {
         match self {
             EnemyType::Eye => 1,
             EnemyType::MagicEye => 2,
@@ -68,7 +68,7 @@ impl EnemyType {
         }
     }
 
-    pub fn defense(&self) -> u8 {
+    pub fn defense(&self) -> i8 {
         match self {
             EnemyType::Eye => 1,
             EnemyType::MagicEye => 2,
