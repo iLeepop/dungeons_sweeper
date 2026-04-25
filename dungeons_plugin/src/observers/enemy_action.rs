@@ -13,6 +13,7 @@ pub fn enemy_havier_handler(
 ) {
     #[cfg(feature = "debug")]
     log::info!("enemy havier handler");
+    let mut final_damage: u8 = 0;
     for (entity, enemy) in uncover_enemy.iter() {
         #[cfg(feature = "debug")]
         log::info!("enemy havier handler: {:?}", enemy);
@@ -28,10 +29,11 @@ pub fn enemy_havier_handler(
             }
 
             if let Some(damage) = damage {
-                #[cfg(feature = "debug")]
-                log::info!("player hurt: {:?}", damage.0);
-                commands.trigger(PlayerHurt(damage.0));
+                final_damage += damage.0;
             }
         }
     }
+    #[cfg(feature = "debug")]
+    log::info!("player hurt: {:?}", final_damage);
+    commands.trigger(PlayerHurt(final_damage));
 }
