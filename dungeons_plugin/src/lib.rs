@@ -11,7 +11,6 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::resources::enemy_assets::EnemyAssets;
-#[cfg(feature = "debug")]
 use crate::resources::tile_map::TileMap;
 use crate::resources::tile::Tile;
 use crate::resources::board::Board;

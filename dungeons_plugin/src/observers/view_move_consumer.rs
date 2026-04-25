@@ -10,14 +10,13 @@ pub fn view_move_consumer(
     event: On<MoveEvent>,
     board: Res<Board>,
     mut view2d: ResMut<View2d>,
-    mut cameras: Query<(&mut Transform, &mut View), With<View>>,
+    cameras: Single<(&mut Transform, &mut View, &mut Camera2d), With<View>>,
 ) {
-    for (mut transform, view) in cameras.iter_mut() {
-        let movement = Vec3::new(event.0.x * view.speed as f32, event.0.y * view.speed as f32, 0.0);
-        if !board.bounds.in_bounds(view2d.position.xy() + movement.xy() - Vec2::new(50.0, 50.0)) {
-            continue;
-        }
-        view2d.position += movement;
-        transform.translation += movement;
+    let (mut transform, view, _camera) = cameras.into_inner();
+    let movement = Vec3::new(event.0.x * view.speed as f32, event.0.y * view.speed as f32, 0.0);
+    if !board.bounds.in_bounds(view2d.position.xy() + movement.xy() - Vec2::new(50.0, 50.0)) {
+        return;
     }
+    view2d.position += movement;
+    transform.translation += movement;
 }

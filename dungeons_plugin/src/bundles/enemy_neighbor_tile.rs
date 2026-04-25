@@ -17,7 +17,7 @@ pub fn enemy_neighbor_bundle(
         Name::new(format!("Tile_{}", coord)),
         Transform::from_xyz((coord.x as f32 * tile_size.width as f32 + tile_size.width as f32 / 2.0) - (board_size.x as f32 / 2.0), (coord.y as f32 * tile_size.height as f32 + tile_size.height as f32 / 2.0) - (board_size.y as f32 / 2.0), 1.0),
         Sprite {
-            color: Color::srgb(90.0, 0.0, 0.0),
+            color: Color::linear_rgb(0.35, 0.24, 0.12),
             custom_size: Some(Vec2::new((tile_size.width - padding) as f32, (tile_size.height - padding) as f32)),
             ..Default::default()
         },
