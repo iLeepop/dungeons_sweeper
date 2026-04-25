@@ -25,7 +25,8 @@ pub fn player_action(
             if let Some(mut health) = health {
                 health.0 -= std::cmp::min(health.0, event.0.try_into().unwrap_or(0));
                 if health.0 <= 0 {
-                    println!("player is dead");
+                    #[cfg(feature = "debug")]
+                    log::info!("player is dead");
                 }
             }
         }

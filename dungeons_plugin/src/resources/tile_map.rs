@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::log;
 use std::ops::{Deref, DerefMut};
 use rand::{rng, Rng};
 
@@ -107,6 +108,11 @@ impl TileMap {
     }
 
     pub fn set_additem(&mut self, safe_count: u16, out_way_count: u16, monster_count: u16, treasure_count: u16) {
+        if (safe_count + out_way_count + monster_count + treasure_count) as u32 > self.width * self.height {
+            #[cfg(feature = "debug")]
+            log::error!("safe_count + out_way_count + monster_count + treasure_count > width * height");
+            return;
+        }
         self.monster_count = monster_count;
         self.treasure_count = treasure_count;
         self.safe_count = safe_count;
