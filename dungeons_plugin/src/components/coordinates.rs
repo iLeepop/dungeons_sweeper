@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use std::fmt::{self, Display, Formatter};
 use std::ops::{Add, Sub};
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
 pub struct Coordinates {
     pub x: u32,
     pub y: u32,

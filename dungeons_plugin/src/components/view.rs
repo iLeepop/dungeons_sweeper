@@ -1,4 +1,6 @@
 use bevy::prelude::*;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-pub struct Grass;
+pub struct View {
+    pub speed: u32,
+}
