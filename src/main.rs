@@ -7,6 +7,7 @@ use dungeons_plugin::{AppState, DungeonsPlugin};
 use dungeons_plugin::resources::board_option::{BoardOption, TileSize};
 use dungeons_plugin::resources::enemy_assets::EnemyAssets;
 use dungeons_plugin::resources::enemy_type::EnemyType;
+use dungeons_plugin::ui::UiAssets;
 
 fn main() {
     let mut app = App::new();
@@ -24,7 +25,7 @@ fn main() {
 
     app.add_systems(Startup, (setup_game, setup_board_options).chain());
 
-    app.insert_state(AppState::OutGame);
+    app.insert_state(AppState::Default);
 
     app.add_plugins(DungeonsPlugin {});
 
@@ -33,7 +34,7 @@ fn main() {
 
 fn setup_game(mut next_state: ResMut<NextState<AppState>>) {
     // 处理资源和设置
-    next_state.set(AppState::PreGame);
+    next_state.set(AppState::MainMenu);
 }
 
 fn setup_board_options(
@@ -80,5 +81,9 @@ fn setup_board_options(
         texture: enemys_texture,
         atlas_layout: enemys_texture_atlas_layout,
         enemy_atlas_layout: enemy_types,
+    });
+
+    commands.insert_resource(UiAssets {
+        font: asset_server.load("fonts/pixeled.ttf"),
     });
 }

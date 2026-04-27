@@ -5,9 +5,11 @@ mod events;
 mod utils;
 mod observers;
 mod bundles;
+pub mod ui;
 
 use std::collections::HashMap;
 
+use bevy::ecs::system::ObserverSystem;
 use bevy::prelude::*;
 
 use crate::resources::enemy_assets::EnemyAssets;
@@ -19,52 +21,49 @@ use crate::components::coordinates::Coordinates;
 use crate::components::view::View;
 use crate::bundles::{cover, enemy_bundle, enemy_neighbor_bundle, grass_bundle, item_bundle, out_way_bundle, player_bundle, safe_bundle};
 use crate::resources::board_option::{BoardOption, TileSize};
+use crate::ui::GameUIPlugin;
 use crate::utils::bounds::Bounds2;
 use crate::observers::{enemy_havier_handler, player_action, taggle_consumer, view_move_consumer};
 use crate::systems::{input_handler, keyboard_input_handler, uncover_tile};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
 pub enum AppState {
+    Default,
+    MainMenu,
     PreGame,
     InGame,
-    OutGame,
+    RestartGame,
+    BackMainMenu,
+    GamePause,
+    GameOver,
 }
 
 pub struct DungeonsPlugin {}
 
 impl Plugin for DungeonsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.add_plugins(GameUIPlugin);
+        app.add_systems(Startup, Self::setup_camera)
+        .add_systems(
             OnEnter(AppState::PreGame),
             (
-                        Self::setup_camera,
                         Self::setup_player,
                         Self::create_board
-                    ).chain(),
+                    ).chain()
         )
         .add_systems(
             Update,
             (
                 input_handler,
                 keyboard_input_handler,
-            ).chain(),
+            ).chain().run_if(in_state(AppState::InGame))
         )
         .add_systems(
             PostUpdate,
-            uncover_tile,
-        )
-        .add_observer(
-            taggle_consumer,
-        )
-        .add_observer(
-            view_move_consumer,
-        )
-        .add_observer(
-            enemy_havier_handler,
-        )
-        .add_observer(
-            player_action,
+            uncover_tile.run_if(in_state(AppState::InGame))
         );
+
+        set_board_observer(app);
     }
 }
 
@@ -107,6 +106,7 @@ impl DungeonsPlugin {
         mut commands: Commands,
         board_options: Res<BoardOption>,
         enemy_assets: Res<EnemyAssets>,
+        mut next_state: ResMut<NextState<AppState>>,
     ) {
         let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
         tile_map.set_additem(board_options.safe_count, board_options.out_way_count, board_options.monster_count, board_options.treasure_count);
@@ -165,6 +165,8 @@ impl DungeonsPlugin {
             covers,
             board_entity: Some(board_entity),
         });
+
+        next_state.set(AppState::InGame);
     }
 
     fn spawn_tiles(
@@ -304,4 +306,22 @@ impl DungeonsPlugin {
             }
         }
     }
+}
+
+fn set_board_observer(
+    app: &mut App,
+) {
+    app
+    .add_observer(
+        taggle_consumer,
+    )
+    .add_observer(
+        view_move_consumer,
+    )
+    .add_observer(
+        enemy_havier_handler,
+    )
+    .add_observer(
+        player_action,
+    );
 }
