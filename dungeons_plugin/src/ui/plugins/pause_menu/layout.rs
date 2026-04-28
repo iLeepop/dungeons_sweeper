@@ -41,7 +41,7 @@ pub fn build_pause_menu(
             },
             BackgroundColor(Color::srgba(0.1, 0.4, 0.9, 0.5)),
             GlobalTransform::default(),
-            Transform::from_xyz(0., 0., 0.),
+            GlobalZIndex(3),
             children![
                 (
                     Node {

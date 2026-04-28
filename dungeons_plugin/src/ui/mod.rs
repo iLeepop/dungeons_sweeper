@@ -17,9 +17,9 @@ pub use observers::*;
 pub use styles::*;
 pub use resources::*;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States, Default)]
 pub enum GameUIState {
-    Default,
+    #[default]
     MainMenu,
     PauseMenu,
     GameOverMenu,

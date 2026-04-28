@@ -62,7 +62,7 @@ pub fn interact_with_quit_main_menu_button(
     match interaction {
         Interaction::Pressed => {
             background_color.0 = tailwind::SLATE_700.into();
-            next_state.set(AppState::BackMainMenu);
+            next_state.set(AppState::MainMenu);
         }
         Interaction::Hovered => {
             background_color.0 = tailwind::SLATE_600.into();

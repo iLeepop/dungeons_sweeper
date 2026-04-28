@@ -3,13 +3,13 @@ use bevy::prelude::*;
 
 mod components;
 mod layout;
-mod interacton;
+mod interaction;
 
 use crate::AppState;
 use crate::resources::View2d;
 use crate::resources::board::Board;
 use crate::components::view::View;
-use crate::ui::plugins::pause_menu::interacton::{interact_with_restart_button, interact_with_resume_button, interact_with_quit_main_menu_button};
+use crate::ui::plugins::pause_menu::interaction::{interact_with_restart_button, interact_with_resume_button, interact_with_quit_main_menu_button};
 use crate::ui::plugins::pause_menu::layout::{spawn_pause_menu, despawn_pause_menu};
 
 pub struct PauseMenuPlugin;
@@ -18,7 +18,8 @@ impl Plugin for PauseMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            Self::pause_game.run_if(in_state(AppState::InGame))
+            Self::pause_game
+            .run_if(in_state(AppState::InGame).or(in_state(AppState::GamePause)))
         )
         .add_systems(
             OnEnter(AppState::GamePause),
@@ -41,7 +42,10 @@ impl Plugin for PauseMenuPlugin {
             Self::restart_game
         )
         .add_systems(
-            OnEnter(AppState::BackMainMenu), 
+            OnTransition {
+                exited: AppState::GamePause, 
+                entered: AppState::MainMenu
+            }, 
             Self::exit_game
         );
     }
@@ -50,10 +54,15 @@ impl Plugin for PauseMenuPlugin {
 impl PauseMenuPlugin {
     fn pause_game(
         keyboard_input: Res<ButtonInput<KeyCode>>,
+        state: Res<State<AppState>>,
         mut next_state: ResMut<NextState<AppState>>,
     ) {
         if keyboard_input.just_pressed(KeyCode::Escape) {
-            next_state.set(AppState::GamePause);
+            if *state == AppState::InGame {
+                next_state.set(AppState::GamePause);
+            } else {
+                next_state.set(AppState::InGame);
+            }
         }
     }
 
@@ -74,7 +83,7 @@ impl PauseMenuPlugin {
         board: Res<Board>,
         mut view2d: ResMut<View2d>,
         view: Single<&mut Transform, With<View>>,
-        mut next_state: ResMut<NextState<AppState>>,
+        // mut next_state: ResMut<NextState<AppState>>,
     ) {
         if board.board_entity.is_some() {
             commands.entity(board.board_entity.unwrap()).despawn();
@@ -83,6 +92,6 @@ impl PauseMenuPlugin {
         let mut transform = view.into_inner();
         transform.translation = Vec3::new(0.0, 0.0, 0.0);
         view2d.position = Vec3::new(0.0, 0.0, 0.0);
-        next_state.set(AppState::MainMenu);
+        // next_state.set(AppState::MainMenu);
     }
 }

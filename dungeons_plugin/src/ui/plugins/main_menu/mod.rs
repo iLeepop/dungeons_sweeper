@@ -6,7 +6,7 @@ use crate::components::view::View;
 use crate::{
     AppState, 
     ui::{plugins::main_menu::{
-        interacton::{
+        interaction::{
             interact_with_start_game_button, 
             interact_with_quit_button
         }, 
@@ -17,7 +17,7 @@ use crate::{
     }}};
 
 mod components;
-mod interacton;
+mod interaction;
 mod layout;
 
 pub struct MainMenuPlugin;
