@@ -18,6 +18,7 @@ use crate::bundles::{
 use crate::components::{Coordinates, View};
 use crate::observers::{enemy_havier_handler, player_action, taggle_consumer, view_move_consumer};
 use crate::resources::board::Board;
+use crate::resources::EnemyType;
 use crate::resources::board_option::{BoardOption, TileSize};
 use crate::resources::enemy_assets::EnemyAssets;
 use crate::resources::tile::Tile;
@@ -25,11 +26,13 @@ use crate::resources::tile_map::TileMap;
 use crate::resources::view2d::View2d;
 use crate::systems::{input_handler, keyboard_input_handler, uncover_tile};
 use crate::ui::GameUIPlugin;
+use crate::ui::UiAssets;
 use crate::utils::bounds::Bounds2;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States, Default)]
 pub enum AppState {
-    Default,
+    #[default]
+    Init,
     MainMenu,
     PreGame,
     InGame,
@@ -43,7 +46,20 @@ pub struct DungeonsPlugin {}
 
 impl Plugin for DungeonsPlugin {
     fn build(&self, app: &mut App) {
+
+        app
+        .init_state::<AppState>();
+
+        app.add_systems(
+            Startup, 
+            (
+                setup_game,
+                setup_board_options
+            ).chain()
+        );
+
         app.add_plugins(GameUIPlugin);
+
         app.add_systems(Startup, Self::setup_camera)
             .add_systems(
                 OnEnter(AppState::PreGame),
@@ -285,4 +301,63 @@ fn set_board_observer(app: &mut App) {
         .add_observer(view_move_consumer)
         .add_observer(enemy_havier_handler)
         .add_observer(player_action);
+}
+
+fn setup_game(mut next_state: ResMut<NextState<AppState>>) {
+    // 处理资源和设置
+    next_state.set(AppState::MainMenu);
+}
+
+fn setup_board_options(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut textures_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+) {
+    let counter_font: Handle<Font> = asset_server.load("fonts/pixeled.ttf");
+    // 设置地图大小、瓷砖大小、瓷砖间距、怪物数量、宝藏数量
+    commands.insert_resource(BoardOption {
+        map_size: (5, 5),
+        tile_size: TileSize {
+            width: 35,
+            height: 35,
+        },
+        padding: 1,
+        counter_font: counter_font,
+        safe_count: 1,
+        out_way_count: 1,
+        monster_count: 5,
+        treasure_count: 3,
+    });
+
+    // 加载资源
+    let enemys_texture: Handle<Image> = asset_server.load("sprites/enemys.png");
+    let enemys_layout = TextureAtlasLayout::from_grid(UVec2::splat(72), 5, 3, None, None);
+    let enemys_texture_atlas_layout = textures_atlas_layouts.add(enemys_layout);
+
+    let mut enemy_types = HashMap::new();
+    enemy_types.insert(EnemyType::Eye, 0);
+    enemy_types.insert(EnemyType::MagicEye, 1);
+    enemy_types.insert(EnemyType::Swamp, 2);
+    enemy_types.insert(EnemyType::BlueGiant, 3);
+    enemy_types.insert(EnemyType::RedGiant, 4);
+    enemy_types.insert(EnemyType::Yeti, 5);
+    enemy_types.insert(EnemyType::EliteYeti, 6);
+    enemy_types.insert(EnemyType::Cyclops, 7);
+    enemy_types.insert(EnemyType::Gonin, 8);
+    enemy_types.insert(EnemyType::DoubleGonin, 9);
+    enemy_types.insert(EnemyType::TinyMush, 10);
+    enemy_types.insert(EnemyType::BigMush, 11);
+    enemy_types.insert(EnemyType::MushMan, 12);
+    enemy_types.insert(EnemyType::Slim, 13);
+    enemy_types.insert(EnemyType::EliteSlim, 14);
+    // 插入资源
+    commands.insert_resource(EnemyAssets {
+        texture: enemys_texture,
+        atlas_layout: enemys_texture_atlas_layout,
+        enemy_atlas_layout: enemy_types,
+    });
+
+    commands.insert_resource(UiAssets {
+        font: asset_server.load("fonts/vonwaon.ttf"),
+    });
 }

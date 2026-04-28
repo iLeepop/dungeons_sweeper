@@ -18,7 +18,7 @@ pub fn interact_with_restart_button(
     match interaction {
         Interaction::Pressed => {
             background_color.0 = tailwind::SLATE_700.into();
-            next_state.set(AppState::RestartGame);
+            next_state.set(AppState::PreGame);
         }
         Interaction::Hovered => {
             background_color.0 = tailwind::SLATE_600.into();

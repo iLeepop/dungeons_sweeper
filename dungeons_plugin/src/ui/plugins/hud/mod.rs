@@ -29,6 +29,13 @@ impl Plugin for HudPlugin {
                 despawn_hud,
             )
             .add_systems(
+                OnTransition {
+                    exited: AppState::GamePause,
+                    entered: AppState::PreGame,
+                },
+                despawn_hud,
+            )
+            .add_systems(
                 Update, 
                 change_hp_bar
                 .run_if(in_state(AppState::InGame))

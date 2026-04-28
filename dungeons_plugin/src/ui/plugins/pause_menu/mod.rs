@@ -5,6 +5,7 @@ mod interaction;
 mod layout;
 
 use crate::AppState;
+use crate::components::Player;
 use crate::components::view::View;
 use crate::resources::View2d;
 use crate::resources::board::Board;
@@ -32,7 +33,13 @@ impl Plugin for PauseMenuPlugin {
             )
                 .run_if(in_state(AppState::GamePause)),
         )
-        .add_systems(OnEnter(AppState::RestartGame), Self::restart_game)
+        .add_systems(
+            OnTransition {
+                exited: AppState::GamePause,
+                entered: AppState::PreGame,
+            }, 
+            Self::restart_game
+        )
         .add_systems(
             OnTransition {
                 exited: AppState::GamePause,
@@ -62,11 +69,13 @@ impl PauseMenuPlugin {
         mut commands: Commands,
         mut next_state: ResMut<NextState<AppState>>,
         board: Res<Board>,
+        player: Single<Entity, With<Player>>,
     ) {
         if board.board_entity.is_some() {
             commands.entity(board.board_entity.unwrap()).despawn();
         }
         commands.remove_resource::<Board>();
+        commands.entity(player.into_inner()).despawn();
         next_state.set(AppState::PreGame);
     }
 

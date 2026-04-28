@@ -21,7 +21,7 @@ pub fn safe_bundle(
             1.0,
         ),
         Sprite {
-            color: Color::srgb(0.0, 120.0, 120.0),
+            color: Color::srgb(0.0, 0.7, 0.5),
             custom_size: Some(Vec2::new(
                 (tile_size.width - padding) as f32,
                 (tile_size.height - padding) as f32,
