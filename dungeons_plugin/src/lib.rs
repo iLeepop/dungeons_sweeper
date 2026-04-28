@@ -110,6 +110,8 @@ impl DungeonsPlugin {
     ) {
         let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
         tile_map.set_additem(board_options.safe_count, board_options.out_way_count, board_options.monster_count, board_options.treasure_count);
+        let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
+        tile_map.set_additem(board_options.safe_count, board_options.out_way_count, board_options.monster_count, board_options.treasure_count);
         #[cfg(feature = "debug")]
         println!("{}", tile_map.console_output());
 

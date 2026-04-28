@@ -1,4 +1,9 @@
+# cargo ignore
 /target
 
-### Mac
+# macos
 .DS_Store
+
+# local resources
+.zip
+.rar
