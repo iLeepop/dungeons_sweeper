@@ -5,6 +5,7 @@ mod interaction;
 mod layout;
 
 pub use components::*;
+pub use interaction::*;
 pub use layout::*;
 
 use crate::AppState;
@@ -20,6 +21,12 @@ impl Plugin for HudPlugin {
                     entered: AppState::MainMenu,
                 },
                 despawn_hud,
-            );
+            )
+            .add_systems(
+                Update, 
+                change_hp_bar
+                .run_if(in_state(AppState::InGame))
+            )
+            .add_message::<HPBarChangeMessage>();
     }
 }

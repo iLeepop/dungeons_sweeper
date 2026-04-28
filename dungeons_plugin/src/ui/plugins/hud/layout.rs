@@ -1,7 +1,7 @@
 use bevy::log;
 use bevy::prelude::*;
 
-use crate::ui::plugins::hud::Hud;
+use crate::ui::plugins::hud::{HPBar, Hud};
 use crate::ui::{Ui, UiAssets};
 
 pub fn spawn_hud(commands: Commands, ui_assets: Res<UiAssets>) {
@@ -46,7 +46,8 @@ pub fn build_hud(mut commands: Commands, ui_assets: Res<UiAssets>) -> Entity {
                     justify: Justify::Center,
                     ..Default::default()
                 },
-                Transform::from_xyz(0., 0., 1.)
+                Transform::from_xyz(0., 0., 1.),
+                HPBar,
             )],
         ))
         .id();

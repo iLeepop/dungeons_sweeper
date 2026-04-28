@@ -3,6 +3,7 @@ use bevy::prelude::*;
 
 use crate::components::{Damage, Defense, Health, Player};
 use crate::events::player::PlayerHurt;
+use crate::ui::HPBarChangeMessage;
 
 pub fn player_action(
     event: On<PlayerHurt>,
@@ -12,6 +13,7 @@ pub fn player_action(
         Option<&mut Damage>,
         Option<&mut Defense>,
     )>,
+    mut hp_bar_change_writer: MessageWriter<HPBarChangeMessage>,
 ) {
     #[cfg(feature = "debug")]
     log::info!("player action");
@@ -28,6 +30,10 @@ pub fn player_action(
         if defense.0 <= 0 {
             if let Some(mut health) = health {
                 health.0 -= std::cmp::min(health.0, event.0.try_into().unwrap_or(0));
+                hp_bar_change_writer.write(HPBarChangeMessage {
+                    hp: health.0,
+                    max_hp: 100 as i8,
+                });
                 if health.0 <= 0 {
                     #[cfg(feature = "debug")]
                     log::info!("player is dead");
