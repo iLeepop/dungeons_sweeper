@@ -1,18 +1,10 @@
-use bevy::prelude::*;
-use bevy::log;
 use bevy::ecs::observer::On;
+use bevy::log;
+use bevy::prelude::*;
 
 use crate::components::Exposed;
 use crate::components::{
-    Enemy, 
-    EnemyNeighbor, 
-    Grass, 
-    Item, 
-    OutWay,
-    Damage,
-    Defense,
-    Health,
-    Uncover,
+    Damage, Defense, Enemy, EnemyNeighbor, Grass, Health, Item, OutWay, Uncover,
 };
 use crate::events::taggle::ToggleEvent;
 use crate::resources::board::Board;
@@ -21,7 +13,13 @@ pub fn taggle_consumer(
     event: On<ToggleEvent>,
     mut commands: Commands,
     mut board: ResMut<Board>,
-    tile_type: Query<(Option<&Enemy>, Option<&EnemyNeighbor>, Option<&Grass>, Option<&Item>, Option<&OutWay>)>,
+    tile_type: Query<(
+        Option<&Enemy>,
+        Option<&EnemyNeighbor>,
+        Option<&Grass>,
+        Option<&Item>,
+        Option<&OutWay>,
+    )>,
     status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>,
     parent: Query<&ChildOf>,
 ) {
@@ -36,7 +34,7 @@ pub fn taggle_consumer(
             Err(e) => {
                 log::error!("Error getting parent: {:?}", e);
                 return;
-            },
+            }
         };
         commands.entity(parent.0).insert(Exposed);
         commands.entity(*cover).insert(Uncover);
@@ -52,7 +50,7 @@ pub fn taggle_consumer(
             Err(e) => {
                 log::error!("Error getting tile: {:?}", e);
                 return;
-            },
+            }
         };
 
         if enemy.is_some() {
@@ -62,7 +60,7 @@ pub fn taggle_consumer(
                 Err(e) => {
                     log::error!("Error getting status: {:?}", e);
                     return;
-                },
+                }
             };
             let damage = damage.unwrap().0;
             log::info!("you get hurt by enemy {} damage", damage);
@@ -83,7 +81,5 @@ pub fn taggle_consumer(
         if out_way.is_some() {
             log::info!("you get out way");
         }
-
-
     }
 }

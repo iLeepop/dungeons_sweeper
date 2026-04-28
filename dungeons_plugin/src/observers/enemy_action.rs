@@ -1,7 +1,7 @@
-use bevy::prelude::*;
 use bevy::log;
+use bevy::prelude::*;
 
-use crate::components::{Exposed, Enemy, Health, Damage, Defense};
+use crate::components::{Damage, Defense, Enemy, Exposed, Health};
 use crate::events::enemy_event::EnemyAttackEvent;
 use crate::events::player::PlayerHurt;
 
@@ -9,7 +9,7 @@ pub fn enemy_havier_handler(
     _event: On<EnemyAttackEvent>,
     mut commands: Commands,
     uncover_enemy: Query<(Entity, Option<&Enemy>), With<Exposed>>,
-    status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>
+    status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>,
 ) {
     #[cfg(feature = "debug")]
     log::info!("enemy havier handler");

@@ -20,20 +20,23 @@ pub struct BoardOption {
 
 impl Default for TileSize {
     fn default() -> Self {
-        TileSize { width: 10, height: 10 }
+        TileSize {
+            width: 10,
+            height: 10,
+        }
     }
 }
 
 impl Default for BoardOption {
     fn default() -> Self {
-        BoardOption { 
-            map_size: (10, 10), 
-            tile_size: TileSize::default(), 
+        BoardOption {
+            map_size: (10, 10),
+            tile_size: TileSize::default(),
             padding: 0,
             counter_font: Handle::default(),
             safe_count: 1,
             out_way_count: 1,
-            monster_count: 10, 
+            monster_count: 10,
             treasure_count: 10,
         }
     }

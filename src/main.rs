@@ -3,11 +3,11 @@ use bevy_egui::EguiPlugin;
 
 use std::collections::HashMap;
 
-use dungeons_plugin::{AppState, DungeonsPlugin};
 use dungeons_plugin::resources::board_option::{BoardOption, TileSize};
 use dungeons_plugin::resources::enemy_assets::EnemyAssets;
 use dungeons_plugin::resources::enemy_type::EnemyType;
 use dungeons_plugin::ui::UiAssets;
+use dungeons_plugin::{AppState, DungeonsPlugin};
 
 fn main() {
     let mut app = App::new();
@@ -46,7 +46,10 @@ fn setup_board_options(
     // 设置地图大小、瓷砖大小、瓷砖间距、怪物数量、宝藏数量
     commands.insert_resource(BoardOption {
         map_size: (5, 5),
-        tile_size: TileSize { width: 35, height: 35 },
+        tile_size: TileSize {
+            width: 35,
+            height: 35,
+        },
         padding: 1,
         counter_font: counter_font,
         safe_count: 1,
@@ -59,7 +62,7 @@ fn setup_board_options(
     let enemys_texture: Handle<Image> = asset_server.load("sprites/enemys.png");
     let enemys_layout = TextureAtlasLayout::from_grid(UVec2::splat(72), 5, 3, None, None);
     let enemys_texture_atlas_layout = textures_atlas_layouts.add(enemys_layout);
-    
+
     let mut enemy_types = HashMap::new();
     enemy_types.insert(EnemyType::Eye, 0);
     enemy_types.insert(EnemyType::MagicEye, 1);

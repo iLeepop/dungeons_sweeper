@@ -1,11 +1,13 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
-use crate::ui::plugins::pause_menu::components::{ResumeButton, RestartButton, QuitMainMenuButton};
 use crate::AppState;
-use crate::resources::board::Board;
+use crate::ui::plugins::pause_menu::components::{QuitMainMenuButton, RestartButton, ResumeButton};
 
 pub fn interact_with_restart_button(
-    mut restart_button: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<RestartButton>)>,
+    mut restart_button: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<RestartButton>),
+    >,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
     let (interaction, mut background_color) = match restart_button.single_mut() {
@@ -28,8 +30,11 @@ pub fn interact_with_restart_button(
 }
 
 pub fn interact_with_resume_button(
-        mut resume_button: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<ResumeButton>)>,
-        mut next_state: ResMut<NextState<AppState>>
+    mut resume_button: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<ResumeButton>),
+    >,
+    mut next_state: ResMut<NextState<AppState>>,
 ) {
     let (interaction, mut background_color) = match resume_button.single_mut() {
         Ok(v) => v,
@@ -51,8 +56,11 @@ pub fn interact_with_resume_button(
 }
 
 pub fn interact_with_quit_main_menu_button(
-    mut quit_main_menu_button: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<QuitMainMenuButton>)>,
-    mut next_state: ResMut<NextState<AppState>>
+    mut quit_main_menu_button: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<QuitMainMenuButton>),
+    >,
+    mut next_state: ResMut<NextState<AppState>>,
 ) {
     let (interaction, mut background_color) = match quit_main_menu_button.single_mut() {
         Ok(v) => v,

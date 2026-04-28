@@ -1,32 +1,25 @@
-use bevy::ui_render::TransparentUi;
-use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*, color::palettes::tailwind};
 use bevy::log;
+use bevy::{color::palettes::tailwind, prelude::*};
 
-use crate::ui::{Ui, plugins::pause_menu::components::{PauseMenu, ResumeButton, RestartButton, QuitMainMenuButton}};
 use crate::ui::UiAssets;
+use crate::ui::{
+    Ui,
+    plugins::pause_menu::components::{PauseMenu, QuitMainMenuButton, RestartButton, ResumeButton},
+};
 
-pub fn spawn_pause_menu(
-    commands: Commands,
-    ui_assets: Res<UiAssets>,
-) {
+pub fn spawn_pause_menu(commands: Commands, ui_assets: Res<UiAssets>) {
     let _pause_menu = build_pause_menu(commands, ui_assets);
 }
 
-pub fn despawn_pause_menu(
-    mut commands: Commands,
-    pause_menu: Single<Entity, With<PauseMenu>>
-) {
+pub fn despawn_pause_menu(mut commands: Commands, pause_menu: Single<Entity, With<PauseMenu>>) {
     #[cfg(feature = "debug")]
     log::info!("Despawning pause menu");
     commands.entity(*pause_menu).despawn();
 }
 
-pub fn build_pause_menu(
-    mut commands: Commands,
-    ui_assets: Res<UiAssets>,
-) -> Entity {
-    return commands.spawn(
-        (
+pub fn build_pause_menu(mut commands: Commands, ui_assets: Res<UiAssets>) -> Entity {
+    return commands
+        .spawn((
             Name::new("PauseMenu"),
             Ui,
             PauseMenu,
@@ -52,22 +45,20 @@ pub fn build_pause_menu(
                         ..Default::default()
                     },
                     GlobalTransform::default(),
-                    children![
-                        (
-                            Text::new("Pause Menu"),
-                            TextFont {
-                                font_size: 40.0,
-                                font: ui_assets.font.clone(),
-                                ..Default::default()
-                            },
-                            TextColor(Color::WHITE),
-                            TextLayout {
-                                justify: Justify::Center,
-                                ..Default::default()
-                            },
-                            Transform::from_xyz(0., 0., 1.)
-                        )
-                    ]
+                    children![(
+                        Text::new("Pause Menu"),
+                        TextFont {
+                            font_size: 40.0,
+                            font: ui_assets.font.clone(),
+                            ..Default::default()
+                        },
+                        TextColor(Color::WHITE),
+                        TextLayout {
+                            justify: Justify::Center,
+                            ..Default::default()
+                        },
+                        Transform::from_xyz(0., 0., 1.)
+                    )]
                 ),
                 (
                     Node {
@@ -81,22 +72,20 @@ pub fn build_pause_menu(
                     BackgroundColor(tailwind::SLATE_500.into()),
                     GlobalTransform::default(),
                     RestartButton,
-                    children![
-                        (
-                            Text::new("Restart"),
-                            TextFont {
-                                font_size: 20.0,
-                                font: ui_assets.font.clone(),
-                                ..Default::default()
-                            },
-                            TextColor(Color::WHITE),
-                            TextLayout {
-                                justify: Justify::Center,
-                                ..Default::default()
-                            },
-                            Transform::from_xyz(0., 0., 1.)
-                        )
-                    ]
+                    children![(
+                        Text::new("Restart"),
+                        TextFont {
+                            font_size: 20.0,
+                            font: ui_assets.font.clone(),
+                            ..Default::default()
+                        },
+                        TextColor(Color::WHITE),
+                        TextLayout {
+                            justify: Justify::Center,
+                            ..Default::default()
+                        },
+                        Transform::from_xyz(0., 0., 1.)
+                    )]
                 ),
                 (
                     Node {
@@ -110,22 +99,20 @@ pub fn build_pause_menu(
                     BackgroundColor(tailwind::SLATE_500.into()),
                     GlobalTransform::default(),
                     ResumeButton,
-                    children![
-                        (
-                            Text::new("Resume"),
-                            TextFont {
-                                font_size: 20.0,
-                                font: ui_assets.font.clone(),
-                                ..Default::default()
-                            },
-                            TextColor(Color::WHITE),
-                            TextLayout {
-                                justify: Justify::Center,
-                                ..Default::default()
-                            },
-                            Transform::from_xyz(0., 0., 1.)
-                        )
-                    ]
+                    children![(
+                        Text::new("Resume"),
+                        TextFont {
+                            font_size: 20.0,
+                            font: ui_assets.font.clone(),
+                            ..Default::default()
+                        },
+                        TextColor(Color::WHITE),
+                        TextLayout {
+                            justify: Justify::Center,
+                            ..Default::default()
+                        },
+                        Transform::from_xyz(0., 0., 1.)
+                    )]
                 ),
                 (
                     Node {
@@ -139,24 +126,22 @@ pub fn build_pause_menu(
                     BackgroundColor(tailwind::SLATE_500.into()),
                     GlobalTransform::default(),
                     QuitMainMenuButton,
-                    children![
-                        (
-                            Text::new("Quit to Main Menu"),
-                            TextFont {
-                                font_size: 20.0,
-                                font: ui_assets.font.clone(),
-                                ..Default::default()
-                            },
-                            TextColor(Color::WHITE),
-                            TextLayout {
-                                justify: Justify::Center,
-                                ..Default::default()
-                            },
-                            Transform::from_xyz(0., 0., 1.)
-                        )
-                    ]
+                    children![(
+                        Text::new("Quit to Main Menu"),
+                        TextFont {
+                            font_size: 20.0,
+                            font: ui_assets.font.clone(),
+                            ..Default::default()
+                        },
+                        TextColor(Color::WHITE),
+                        TextLayout {
+                            justify: Justify::Center,
+                            ..Default::default()
+                        },
+                        Transform::from_xyz(0., 0., 1.)
+                    )]
                 ),
-            ]
-        )
-    ).id();
+            ],
+        ))
+        .id();
 }

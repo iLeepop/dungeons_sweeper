@@ -10,7 +10,7 @@ pub struct Coordinates {
 
 impl Add for Coordinates {
     type Output = Self;
-    
+
     fn add(self, rhs: Self) -> Self::Output {
         Coordinates {
             x: self.x + rhs.x,
@@ -31,7 +31,7 @@ impl Add<(i8, i8)> for Coordinates {
 
 impl Sub for Coordinates {
     type Output = Self;
-    
+
     fn sub(self, rhs: Self) -> Self::Output {
         Coordinates {
             x: self.x - rhs.x,

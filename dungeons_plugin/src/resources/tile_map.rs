@@ -1,14 +1,22 @@
-use bevy::prelude::*;
 use bevy::log;
+use bevy::prelude::*;
+use rand::{Rng, rng};
 use std::ops::{Deref, DerefMut};
-use rand::{rng, Rng};
 
-use crate::{components::coordinates::Coordinates, resources::{tile::Tile, enemy_type::EnemyType}};
+use crate::{
+    components::coordinates::Coordinates,
+    resources::{enemy_type::EnemyType, tile::Tile},
+};
 
 const SQUARE_COORDINATES: [(i8, i8); 8] = [
-    (-1, -1), (0, -1), (1, -1),
-    (-1, 0),          (1, 0),
-    (-1, 1), (0, 1), (1, 1),
+    (-1, -1),
+    (0, -1),
+    (1, -1),
+    (-1, 0),
+    (1, 0),
+    (-1, 1),
+    (0, 1),
+    (1, 1),
 ];
 
 #[derive(Resource)]
@@ -60,7 +68,6 @@ impl TileMap {
         format!("{}{}", buffer, line)
     }
 
-
     pub fn get_tile(&self, coord: Coordinates) -> Option<&Tile> {
         if coord.x < self.width && coord.y < self.height {
             Some(&self[coord.x as usize][coord.y as usize])
@@ -70,7 +77,7 @@ impl TileMap {
     }
 
     pub fn get_tile_mut(&mut self, coord: Coordinates) -> Option<&mut Tile> {
-        if coord.x < self.width &&coord.x < self.height {
+        if coord.x < self.width && coord.x < self.height {
             Some(&mut self[coord.x as usize][coord.x as usize])
         } else {
             None
@@ -98,19 +105,29 @@ impl TileMap {
 
     pub fn enemy_health_at(&self, coordinates: Coordinates) -> i8 {
         self.safe_square_at(coordinates)
-            .filter_map(|coord| self.get_tile(coord).map(|tile| match tile {
-                Tile::Enemy(enemy_type) => {
-                    enemy_type.health()
-                },
-                _ => 0,
-            }))
+            .filter_map(|coord| {
+                self.get_tile(coord).map(|tile| match tile {
+                    Tile::Enemy(enemy_type) => enemy_type.health(),
+                    _ => 0,
+                })
+            })
             .sum()
     }
 
-    pub fn set_additem(&mut self, safe_count: u16, out_way_count: u16, monster_count: u16, treasure_count: u16) {
-        if (safe_count + out_way_count + monster_count + treasure_count) as u32 > self.width * self.height {
+    pub fn set_additem(
+        &mut self,
+        safe_count: u16,
+        out_way_count: u16,
+        monster_count: u16,
+        treasure_count: u16,
+    ) {
+        if (safe_count + out_way_count + monster_count + treasure_count) as u32
+            > self.width * self.height
+        {
             #[cfg(feature = "debug")]
-            log::error!("safe_count + out_way_count + monster_count + treasure_count > width * height");
+            log::error!(
+                "safe_count + out_way_count + monster_count + treasure_count > width * height"
+            );
             return;
         }
         self.monster_count = monster_count;

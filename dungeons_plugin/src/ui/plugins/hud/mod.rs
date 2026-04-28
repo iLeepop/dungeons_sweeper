@@ -1,12 +1,11 @@
 use bevy::prelude::*;
 
-mod layout;
-mod interaction;
 mod components;
+mod interaction;
+mod layout;
 
-pub use layout::*;
-pub use interaction::*;
 pub use components::*;
+pub use layout::*;
 
 use crate::AppState;
 
@@ -14,17 +13,13 @@ pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
-        app
-        .add_systems(
-            OnEnter(AppState::InGame), 
-            spawn_hud
-        )
-        .add_systems(
-            OnTransition {
-                exited: AppState::GamePause,
-                entered: AppState::MainMenu
-            },
-            despawn_hud
-        );
+        app.add_systems(OnEnter(AppState::InGame), spawn_hud)
+            .add_systems(
+                OnTransition {
+                    exited: AppState::GamePause,
+                    entered: AppState::MainMenu,
+                },
+                despawn_hud,
+            );
     }
 }

@@ -1,11 +1,13 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
-use crate::ui::plugins::main_menu::components::{StartGameButton, QuitButton};
 use crate::AppState;
-use crate::resources::board::Board;
+use crate::ui::plugins::main_menu::components::{QuitButton, StartGameButton};
 
 pub fn interact_with_start_game_button(
-    mut start_button: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<StartGameButton>)>,
+    mut start_button: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<StartGameButton>),
+    >,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
     let (interaction, mut background_color) = match start_button.single_mut() {
@@ -28,8 +30,11 @@ pub fn interact_with_start_game_button(
 }
 
 pub fn interact_with_quit_button(
-    mut quit_button: Query<(&Interaction, &mut BackgroundColor), (Changed<Interaction>, With<QuitButton>)>,
-    mut exit_msg_writer: MessageWriter<AppExit>
+    mut quit_button: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<QuitButton>),
+    >,
+    mut exit_msg_writer: MessageWriter<AppExit>,
 ) {
     let (interaction, mut background_color) = match quit_button.single_mut() {
         Ok(v) => v,

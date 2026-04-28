@@ -1,7 +1,4 @@
 use bevy::prelude::*;
 
-
 #[derive(Resource)]
-pub struct PlayerUI {
-
-}
+pub struct PlayerUI {}

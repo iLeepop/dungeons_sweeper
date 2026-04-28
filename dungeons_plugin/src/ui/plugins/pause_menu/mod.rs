@@ -1,16 +1,17 @@
-use bevy::input::keyboard::KeyboardInput;
 use bevy::prelude::*;
 
 mod components;
-mod layout;
 mod interaction;
+mod layout;
 
 use crate::AppState;
+use crate::components::view::View;
 use crate::resources::View2d;
 use crate::resources::board::Board;
-use crate::components::view::View;
-use crate::ui::plugins::pause_menu::interaction::{interact_with_restart_button, interact_with_resume_button, interact_with_quit_main_menu_button};
-use crate::ui::plugins::pause_menu::layout::{spawn_pause_menu, despawn_pause_menu};
+use crate::ui::plugins::pause_menu::interaction::{
+    interact_with_quit_main_menu_button, interact_with_restart_button, interact_with_resume_button,
+};
+use crate::ui::plugins::pause_menu::layout::{despawn_pause_menu, spawn_pause_menu};
 
 pub struct PauseMenuPlugin;
 
@@ -18,35 +19,26 @@ impl Plugin for PauseMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            Self::pause_game
-            .run_if(in_state(AppState::InGame).or(in_state(AppState::GamePause)))
+            Self::pause_game.run_if(in_state(AppState::InGame).or(in_state(AppState::GamePause))),
         )
-        .add_systems(
-            OnEnter(AppState::GamePause),
-            spawn_pause_menu
-        )
-        .add_systems(
-            OnExit(AppState::GamePause),
-            despawn_pause_menu
-        )
+        .add_systems(OnEnter(AppState::GamePause), spawn_pause_menu)
+        .add_systems(OnExit(AppState::GamePause), despawn_pause_menu)
         .add_systems(
             Update,
             (
                 interact_with_restart_button,
                 interact_with_resume_button,
-                interact_with_quit_main_menu_button
-            ).run_if(in_state(AppState::GamePause))
+                interact_with_quit_main_menu_button,
+            )
+                .run_if(in_state(AppState::GamePause)),
         )
-        .add_systems(
-            OnEnter(AppState::RestartGame), 
-            Self::restart_game
-        )
+        .add_systems(OnEnter(AppState::RestartGame), Self::restart_game)
         .add_systems(
             OnTransition {
-                exited: AppState::GamePause, 
-                entered: AppState::MainMenu
-            }, 
-            Self::exit_game
+                exited: AppState::GamePause,
+                entered: AppState::MainMenu,
+            },
+            Self::exit_game,
         );
     }
 }

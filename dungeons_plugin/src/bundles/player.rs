@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::components::{Player, Health, Damage, Defense};
+use crate::components::{Damage, Defense, Health, Player};
 
 pub fn player_bundle() -> impl Bundle {
     return (
@@ -9,5 +9,5 @@ pub fn player_bundle() -> impl Bundle {
         Health(100),
         Damage(5),
         Defense(5),
-    )
+    );
 }

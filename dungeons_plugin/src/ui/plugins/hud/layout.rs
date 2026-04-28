@@ -1,31 +1,22 @@
-use bevy::prelude::*;
 use bevy::log;
+use bevy::prelude::*;
 
-use crate::ui::{Ui, UiAssets};
 use crate::ui::plugins::hud::Hud;
+use crate::ui::{Ui, UiAssets};
 
-pub fn spawn_hud(
-    mut commands: Commands,
-    ui_assets: Res<UiAssets>,
-) {
-    let hud = build_hud(commands, ui_assets);
+pub fn spawn_hud(commands: Commands, ui_assets: Res<UiAssets>) {
+    let _hud = build_hud(commands, ui_assets);
 }
 
-pub fn despawn_hud(
-    mut commands: Commands,
-    hud: Single<Entity, With<Hud>>,
-) {
+pub fn despawn_hud(mut commands: Commands, hud: Single<Entity, With<Hud>>) {
     #[cfg(feature = "debug")]
     log::info!("Despawning Hud");
     commands.entity(*hud).despawn();
 }
 
-pub fn build_hud(
-    mut commands: Commands,
-    ui_assets: Res<UiAssets>,
-) -> Entity {
-    return commands.spawn(
-        (
+pub fn build_hud(mut commands: Commands, ui_assets: Res<UiAssets>) -> Entity {
+    return commands
+        .spawn((
             Name::new("Hud"),
             Ui,
             Hud,
@@ -43,23 +34,20 @@ pub fn build_hud(
             BackgroundColor(Color::srgba(0.0, 0.9, 0.0, 0.5)),
             GlobalTransform::default(),
             GlobalZIndex(2),
-            children![
-                (
-                    Text::new("Hud"),
-                    TextFont {
-                        font_size: 14.0,
-                        font: ui_assets.font.clone(),
-                        ..Default::default()
-                    },
-                    TextColor(Color::BLACK),
-                    TextLayout {
-                        justify: Justify::Center,
-                        ..Default::default()
-                    },
-                    Transform::from_xyz(0., 0., 1.)
-                )
-            ]
-        )
-    )
-    .id();
+            children![(
+                Text::new("Hud"),
+                TextFont {
+                    font_size: 14.0,
+                    font: ui_assets.font.clone(),
+                    ..Default::default()
+                },
+                TextColor(Color::BLACK),
+                TextLayout {
+                    justify: Justify::Center,
+                    ..Default::default()
+                },
+                Transform::from_xyz(0., 0., 1.)
+            )],
+        ))
+        .id();
 }

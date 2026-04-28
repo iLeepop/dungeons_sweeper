@@ -1,31 +1,25 @@
-use bevy::{ecs::relationship::RelationshipSourceCollection, prelude::*, color::palettes::tailwind};
 use bevy::log;
+use bevy::{color::palettes::tailwind, prelude::*};
 
-use crate::ui::{Ui, plugins::main_menu::components::{MainMenu, StartGameButton, QuitButton}};
 use crate::ui::UiAssets;
+use crate::ui::{
+    Ui,
+    plugins::main_menu::components::{MainMenu, QuitButton, StartGameButton},
+};
 
-pub fn spawn_main_menu(
-    commands: Commands,
-    ui_assets: Res<UiAssets>,
-) {
+pub fn spawn_main_menu(commands: Commands, ui_assets: Res<UiAssets>) {
     let _main_menu = build_main_menu(commands, ui_assets);
 }
 
-pub fn despawn_main_menu(
-    mut commands: Commands,
-    main_menu: Single<Entity, With<MainMenu>>
-) {
+pub fn despawn_main_menu(mut commands: Commands, main_menu: Single<Entity, With<MainMenu>>) {
     #[cfg(feature = "debug")]
     log::info!("Despawning main menu");
     commands.entity(*main_menu).despawn();
 }
 
-pub fn build_main_menu(
-    mut commands: Commands,
-    ui_assets: Res<UiAssets>,
-) -> Entity {
-    return commands.spawn(
-        (
+pub fn build_main_menu(mut commands: Commands, ui_assets: Res<UiAssets>) -> Entity {
+    return commands
+        .spawn((
             Name::new("MainMenu"),
             Ui,
             MainMenu,
@@ -51,22 +45,20 @@ pub fn build_main_menu(
                         ..Default::default()
                     },
                     GlobalTransform::default(),
-                    children![
-                        (
-                            Text::new("Dungeons Sweeper"),
-                            TextFont {
-                                font_size: 40.0,
-                                font: ui_assets.font.clone(),
-                                ..Default::default()
-                            },
-                            TextColor(Color::WHITE),
-                            TextLayout {
-                                justify: Justify::Center,
-                                ..Default::default()
-                            },
-                            Transform::from_xyz(0., 0., 1.)
-                        )
-                    ]
+                    children![(
+                        Text::new("Dungeons Sweeper"),
+                        TextFont {
+                            font_size: 40.0,
+                            font: ui_assets.font.clone(),
+                            ..Default::default()
+                        },
+                        TextColor(Color::WHITE),
+                        TextLayout {
+                            justify: Justify::Center,
+                            ..Default::default()
+                        },
+                        Transform::from_xyz(0., 0., 1.)
+                    )]
                 ),
                 (
                     Node {
@@ -80,22 +72,20 @@ pub fn build_main_menu(
                     BackgroundColor(tailwind::SLATE_500.into()),
                     GlobalTransform::default(),
                     StartGameButton,
-                    children![
-                        (
-                            Text::new("Start Game"),
-                            TextFont {
-                                font_size: 20.0,
-                                font: ui_assets.font.clone(),
-                                ..Default::default()
-                            },
-                            TextColor(Color::WHITE),
-                            TextLayout {
-                                justify: Justify::Center,
-                                ..Default::default()
-                            },
-                            Transform::from_xyz(0., 0., 1.)
-                        )
-                    ]
+                    children![(
+                        Text::new("Start Game"),
+                        TextFont {
+                            font_size: 20.0,
+                            font: ui_assets.font.clone(),
+                            ..Default::default()
+                        },
+                        TextColor(Color::WHITE),
+                        TextLayout {
+                            justify: Justify::Center,
+                            ..Default::default()
+                        },
+                        Transform::from_xyz(0., 0., 1.)
+                    )]
                 ),
                 (
                     Node {
@@ -109,24 +99,22 @@ pub fn build_main_menu(
                     BackgroundColor(tailwind::SLATE_500.into()),
                     GlobalTransform::default(),
                     QuitButton,
-                    children![
-                        (
-                            Text::new("Quit"),
-                            TextFont {
-                                font_size: 20.0,
-                                font: ui_assets.font.clone(),
-                                ..Default::default()
-                            },
-                            TextColor(Color::WHITE),
-                            TextLayout {
-                                justify: Justify::Center,
-                                ..Default::default()
-                            },
-                            Transform::from_xyz(0., 0., 1.)
-                        )
-                    ]
+                    children![(
+                        Text::new("Quit"),
+                        TextFont {
+                            font_size: 20.0,
+                            font: ui_assets.font.clone(),
+                            ..Default::default()
+                        },
+                        TextColor(Color::WHITE),
+                        TextLayout {
+                            justify: Justify::Center,
+                            ..Default::default()
+                        },
+                        Transform::from_xyz(0., 0., 1.)
+                    )]
                 ),
-            ]
-        )
-    ).id();
+            ],
+        ))
+        .id();
 }

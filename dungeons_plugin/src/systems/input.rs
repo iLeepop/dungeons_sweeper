@@ -1,7 +1,6 @@
-use bevy::window::Window;
-use bevy::prelude::*;
 use bevy::log;
-
+use bevy::prelude::*;
+use bevy::window::Window;
 
 use crate::events::enemy_event::EnemyAttackEvent;
 use crate::events::taggle::ToggleEvent;
@@ -40,23 +39,19 @@ pub fn input_handler(
             // let tile = board.tile_map.get_tile(coordinates);
         }
     } else if input.pressed(MouseButton::Middle) {
-
     }
 }
 
-pub fn keyboard_input_handler(
-    mut commands: Commands,
-    input: Res<ButtonInput<KeyCode>>,
-) {
+pub fn keyboard_input_handler(mut commands: Commands, input: Res<ButtonInput<KeyCode>>) {
     if input.pressed(KeyCode::KeyW) {
         commands.trigger(MoveEvent(Vec2::new(0.0, 1.0)));
-    } 
+    }
     if input.pressed(KeyCode::KeyS) {
         commands.trigger(MoveEvent(Vec2::new(0.0, -1.0)));
-    } 
+    }
     if input.pressed(KeyCode::KeyA) {
         commands.trigger(MoveEvent(Vec2::new(-1.0, 0.0)));
-    } 
+    }
     if input.pressed(KeyCode::KeyD) {
         commands.trigger(MoveEvent(Vec2::new(1.0, 0.0)));
     }
