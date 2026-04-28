@@ -14,7 +14,13 @@ pub struct HudPlugin;
 
 impl Plugin for HudPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::InGame), spawn_hud)
+        app.add_systems(
+            OnTransition {
+                exited: AppState::PreGame,
+                entered: AppState::InGame,
+            }, 
+            spawn_hud
+        )
             .add_systems(
                 OnTransition {
                     exited: AppState::GamePause,

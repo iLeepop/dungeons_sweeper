@@ -30,6 +30,7 @@ pub fn player_action(
         if defense.0 <= 0 {
             if let Some(mut health) = health {
                 health.0 -= std::cmp::min(health.0, event.0.try_into().unwrap_or(0));
+                // 发送 HPBar 变更信息
                 hp_bar_change_writer.write(HPBarChangeMessage {
                     hp: health.0,
                     max_hp: 100 as i8,
