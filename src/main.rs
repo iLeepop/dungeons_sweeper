@@ -87,6 +87,6 @@ fn setup_board_options(
     });
 
     commands.insert_resource(UiAssets {
-        font: asset_server.load("fonts/pixeled.ttf"),
+        font: asset_server.load("fonts/vonwaon.ttf"),
     });
 }
