@@ -2,7 +2,7 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
-use crate::components::item::Item;
+use crate::components::Treasure;
 use crate::resources::board_option::TileSize;
 
 pub fn item_bundle(
@@ -29,7 +29,7 @@ pub fn item_bundle(
             ..Default::default()
         },
         coord,
-        Item,
+        Treasure,
         children![],
     );
 }

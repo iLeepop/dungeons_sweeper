@@ -1,10 +1,14 @@
 use bevy::prelude::*;
 
+// 效果
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-pub struct Player;
+pub struct Effect;
 
+// 激活中的效果
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-pub struct GoldCoin;
+pub struct ActivateEffect;
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-pub struct Gem;
+// 效果实例
+pub trait EffectInstance {
+
+}

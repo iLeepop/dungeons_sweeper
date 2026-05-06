@@ -13,13 +13,15 @@ use bevy::prelude::*;
 
 use crate::bundles::{
     cover, enemy_bundle, enemy_neighbor_bundle, grass_bundle, item_bundle, out_way_bundle,
-    player_bundle, safe_bundle,
+    player_bundle, safe_bundle, spawn_bundle,
 };
 use crate::components::{Coordinates, View};
 use crate::observers::{enemy_havier_handler, player_action, taggle_consumer, view_move_consumer};
 use crate::resources::board::Board;
+use crate::resources::apply_stage_to_board_option;
 use crate::resources::EnemyType;
 use crate::resources::board_option::{BoardOption, TileSize};
+use crate::resources::StageConfig;
 use crate::resources::enemy_assets::EnemyAssets;
 use crate::resources::tile::Tile;
 use crate::resources::tile_map::TileMap;
@@ -63,7 +65,12 @@ impl Plugin for DungeonsPlugin {
         app.add_systems(Startup, Self::setup_camera)
             .add_systems(
                 OnEnter(AppState::PreGame),
-                (Self::setup_player, Self::create_board).chain(),
+                (
+                    apply_stage_board_options,
+                    Self::setup_player,
+                    Self::create_board,
+                )
+                    .chain(),
             )
             .add_systems(
                 Update,
@@ -118,13 +125,7 @@ impl DungeonsPlugin {
             board_options.out_way_count,
             board_options.monster_count,
             board_options.treasure_count,
-        );
-        let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
-        tile_map.set_additem(
-            board_options.safe_count,
-            board_options.out_way_count,
-            board_options.monster_count,
-            board_options.treasure_count,
+            board_options.difficulty_factor,
         );
         #[cfg(feature = "debug")]
         println!("{}", tile_map.console_output());
@@ -171,6 +172,7 @@ impl DungeonsPlugin {
                     &mut covers,
                     board_size,
                     &enemy_assets,
+                    board_options.difficulty_factor,
                 );
             })
             .id();
@@ -200,6 +202,7 @@ impl DungeonsPlugin {
         covers: &mut HashMap<Coordinates, Entity>,
         board_size: Vec3,
         enemy_assets: &EnemyAssets,
+        difficulty_factor: f32,
     ) {
         for (y, line) in tile_map.tiles().iter().enumerate() {
             for (x, tile) in line.iter().enumerate() {
@@ -208,11 +211,23 @@ impl DungeonsPlugin {
                     y: y as u32,
                 };
                 match tile {
+                    Tile::Spawn => {
+                        tiles.insert(
+                            coord,
+                            commands
+                                .spawn(spawn_bundle(coord, tile_size, padding, board_size))
+                                .id(),
+                        );
+                    }
                     Tile::Safe => {
                         tiles.insert(
                             coord,
                             commands
                                 .spawn(safe_bundle(coord, tile_size, padding, board_size))
+                                .with_children(|parent| {
+                                    let cover = parent.spawn(cover(tile_size, padding)).id();
+                                    covers.insert(coord, cover);
+                                })
                                 .id(),
                         );
                     }
@@ -251,6 +266,7 @@ impl DungeonsPlugin {
                                     board_size,
                                     &enemy_assets,
                                     *enemy_type,
+                                    difficulty_factor,
                                 ))
                                 .with_children(|parent| {
                                     let cover = parent.spawn(cover(tile_size, padding)).id();
@@ -308,6 +324,10 @@ fn setup_game(mut next_state: ResMut<NextState<AppState>>) {
     next_state.set(AppState::MainMenu);
 }
 
+fn apply_stage_board_options(mut board: ResMut<BoardOption>, stage: Res<StageConfig>) {
+    apply_stage_to_board_option(&mut board, stage.stage);
+}
+
 fn setup_board_options(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
@@ -315,6 +335,8 @@ fn setup_board_options(
 ) {
     let counter_font: Handle<Font> = asset_server.load("fonts/pixeled.ttf");
     // 设置地图大小、瓷砖大小、瓷砖间距、怪物数量、宝藏数量
+    commands.insert_resource(StageConfig::default());
+
     commands.insert_resource(BoardOption {
         map_size: (5, 5),
         tile_size: TileSize {
@@ -323,6 +345,7 @@ fn setup_board_options(
         },
         padding: 1,
         counter_font: counter_font,
+        difficulty_factor: 1.0,
         safe_count: 1,
         out_way_count: 1,
         monster_count: 5,

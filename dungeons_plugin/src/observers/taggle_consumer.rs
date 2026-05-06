@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 use crate::components::Exposed;
 use crate::components::{
-    Damage, Defense, Enemy, EnemyNeighbor, Grass, Health, Item, OutWay, Uncover,
+    Damage, Defense, Enemy, EnemyNeighbor, Grass, Health, Treasure, OutWay, Uncover,
 };
 use crate::events::taggle::ToggleEvent;
 use crate::resources::board::Board;
@@ -17,7 +17,7 @@ pub fn taggle_consumer(
         Option<&Enemy>,
         Option<&EnemyNeighbor>,
         Option<&Grass>,
-        Option<&Item>,
+        Option<&Treasure>,
         Option<&OutWay>,
     )>,
     status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>,
@@ -45,7 +45,7 @@ pub fn taggle_consumer(
         #[cfg(feature = "debug")]
         log::info!("despawn tile: {:?}", *tile);
 
-        let (enemy, enemy_neighbor, grass, item, out_way) = match tile_type.get(*tile) {
+        let (enemy, enemy_neighbor, grass, treasure, out_way) = match tile_type.get(*tile) {
             Ok(v) => v,
             Err(e) => {
                 log::error!("Error getting tile: {:?}", e);
@@ -74,7 +74,7 @@ pub fn taggle_consumer(
             log::info!("you get on grass wuth health increase");
         }
 
-        if item.is_some() {
+        if treasure.is_some() {
             log::info!("you get item");
         }
 

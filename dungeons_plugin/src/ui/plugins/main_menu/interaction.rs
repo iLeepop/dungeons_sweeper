@@ -1,6 +1,7 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
 use crate::AppState;
+use crate::resources::StageConfig;
 use crate::ui::plugins::main_menu::components::{QuitButton, StartGameButton};
 
 pub fn interact_with_start_game_button(
@@ -9,6 +10,7 @@ pub fn interact_with_start_game_button(
         (Changed<Interaction>, With<StartGameButton>),
     >,
     mut next_state: ResMut<NextState<AppState>>,
+    mut stage: ResMut<StageConfig>,
 ) {
     let (interaction, mut background_color) = match start_button.single_mut() {
         Ok(v) => v,
@@ -18,6 +20,7 @@ pub fn interact_with_start_game_button(
     match interaction {
         Interaction::Pressed => {
             background_color.0 = tailwind::SLATE_700.into();
+            stage.reset_to_first_stage();
             next_state.set(AppState::PreGame);
         }
         Interaction::Hovered => {

@@ -2,7 +2,7 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
-use crate::components::grass::Grass;
+use crate::components::Grass;
 use crate::resources::board_option::TileSize;
 
 pub fn grass_bundle(

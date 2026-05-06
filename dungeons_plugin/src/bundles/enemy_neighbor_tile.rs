@@ -2,7 +2,7 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
-use crate::components::enemy_neighbor::EnemyNeighbor;
+use crate::components::EnemyNeighbor;
 use crate::resources::board_option::TileSize;
 
 pub fn enemy_neighbor_bundle(

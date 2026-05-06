@@ -1,11 +1,11 @@
 use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
+use crate::components::Safe;
 use crate::components::coordinates::Coordinates;
-use crate::components::OutWay;
 use crate::resources::board_option::TileSize;
 
-pub fn out_way_bundle(
+pub fn spawn_bundle(
     coord: Coordinates,
     tile_size: TileSize,
     padding: u32,
@@ -21,7 +21,7 @@ pub fn out_way_bundle(
             1.0,
         ),
         Sprite {
-            color: Color::srgb(0.0, 0.0, 140.0),
+            color: Color::srgb(0.0, 0.7, 0.5),
             custom_size: Some(Vec2::new(
                 (tile_size.width - padding) as f32,
                 (tile_size.height - padding) as f32,
@@ -29,7 +29,7 @@ pub fn out_way_bundle(
             ..Default::default()
         },
         coord,
-        OutWay,
+        Safe,
         children![],
     );
 }

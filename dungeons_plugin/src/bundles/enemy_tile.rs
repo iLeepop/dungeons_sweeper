@@ -13,6 +13,7 @@ pub fn enemy_bundle(
     board_size: Vec3,
     enemy_assets: &EnemyAssets,
     enemy_type: EnemyType,
+    difficulty_factor: f32,
 ) -> impl Bundle {
     let index = match enemy_assets.enemy_atlas_layout.get(&enemy_type) {
         Some(index) => *index as usize,
@@ -37,9 +38,9 @@ pub fn enemy_bundle(
         },
         coord,
         Enemy,
-        Health(enemy_type.health()),
-        Damage(enemy_type.damage()),
-        Defense(enemy_type.defense()),
+        Health(enemy_type.health(difficulty_factor)),
+        Damage(enemy_type.damage(difficulty_factor)),
+        Defense(enemy_type.defense(difficulty_factor)),
         children![(
             Sprite::from_atlas_image(
                 enemy_assets.texture.clone(),

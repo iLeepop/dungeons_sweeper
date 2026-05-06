@@ -6,6 +6,7 @@ pub mod item_tile;
 pub mod out_way_tile;
 pub mod player;
 pub mod safe_tile;
+pub mod spawn_tile;
 
 pub use cover::*;
 pub use enemy_neighbor_tile::*;
@@ -15,3 +16,4 @@ pub use item_tile::*;
 pub use out_way_tile::*;
 pub use player::*;
 pub use safe_tile::*;
+pub use spawn_tile::*;

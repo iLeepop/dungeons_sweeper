@@ -23,8 +23,9 @@ const SQUARE_COORDINATES: [(i8, i8); 8] = [
 pub struct TileMap {
     safe_count: u16,
     out_way_count: u16,
-    monster_count: u16,
+    enemy_count: u16,
     treasure_count: u16,
+    difficulty_factor: f32,
     width: u32,
     height: u32,
     tiles: Vec<Vec<Tile>>,
@@ -42,8 +43,9 @@ impl TileMap {
         TileMap {
             safe_count: 0,
             out_way_count: 0,
-            monster_count: 0,
+            enemy_count: 0,
             treasure_count: 0,
+            difficulty_factor: 1.0,
             width,
             height,
             tiles,
@@ -53,8 +55,8 @@ impl TileMap {
     #[cfg(feature = "debug")]
     pub fn console_output(&self) -> String {
         let mut buffer = format!(
-            "Map ({}, {}) with {} monsters and {} treasures:\n",
-            self.width, self.height, self.monster_count, self.treasure_count
+            "Map ({}, {}) with {} enemies and {} treasures:\n",
+            self.width, self.height, self.enemy_count, self.treasure_count
         );
         let line: String = (0..=(self.width + 1)).into_iter().map(|_| '-').collect();
         buffer = format!("{}{}\n", buffer, line);
@@ -70,15 +72,15 @@ impl TileMap {
 
     pub fn get_tile(&self, coord: Coordinates) -> Option<&Tile> {
         if coord.x < self.width && coord.y < self.height {
-            Some(&self[coord.x as usize][coord.y as usize])
+            Some(&self[coord.y as usize][coord.x as usize])
         } else {
             None
         }
     }
 
     pub fn get_tile_mut(&mut self, coord: Coordinates) -> Option<&mut Tile> {
-        if coord.x < self.width && coord.x < self.height {
-            Some(&mut self[coord.x as usize][coord.x as usize])
+        if coord.x < self.width && coord.y < self.height {
+            Some(&mut self[coord.y as usize][coord.x as usize])
         } else {
             None
         }
@@ -107,7 +109,7 @@ impl TileMap {
         self.safe_square_at(coordinates)
             .filter_map(|coord| {
                 self.get_tile(coord).map(|tile| match tile {
-                    Tile::Enemy(enemy_type) => enemy_type.health(),
+                    Tile::Enemy(enemy_type) => enemy_type.health(self.difficulty_factor),
                     _ => 0,
                 })
             })
@@ -118,10 +120,12 @@ impl TileMap {
         &mut self,
         safe_count: u16,
         out_way_count: u16,
-        monster_count: u16,
+        enemy_count: u16,
         treasure_count: u16,
+        difficulty_factor: f32,
     ) {
-        if (safe_count + out_way_count + monster_count + treasure_count) as u32
+        self.difficulty_factor = difficulty_factor;
+        if (1 + safe_count + out_way_count + enemy_count + treasure_count) as u32
             > self.width * self.height
         {
             #[cfg(feature = "debug")]
@@ -130,35 +134,26 @@ impl TileMap {
             );
             return;
         }
-        self.monster_count = monster_count;
+        self.enemy_count = enemy_count;
         self.treasure_count = treasure_count;
         self.safe_count = safe_count;
         self.out_way_count = out_way_count;
-        let mut remaining_monster = monster_count;
+        let mut remaining_enemy = enemy_count;
         let mut remaining_treasure = treasure_count;
         let mut one_way_out = out_way_count;
         let mut safe_count = safe_count;
         let mut rng = rng();
-        while remaining_monster > 0 {
+        // 出生点（不占用 monster_count）
+        {
             let (x, y) = (
                 rng.random_range(0..self.width) as usize,
                 rng.random_range(0..self.height) as usize,
             );
             if let Tile::Grass = self[y][x] {
-                self[y][x] = Tile::Enemy(EnemyType::random());
-                remaining_monster -= 1;
+                self[y][x] = Tile::Spawn;
             }
         }
-        while remaining_treasure > 0 {
-            let (x, y) = (
-                rng.random_range(0..self.width) as usize,
-                rng.random_range(0..self.height) as usize,
-            );
-            if let Tile::Grass = self[y][x] {
-                self[y][x] = Tile::Treasure;
-                remaining_treasure -= 1;
-            }
-        }
+        // 出口与安全点优先于怪物/宝藏，降低被特殊格挤占的概率
         while one_way_out > 0 {
             let (x, y) = (
                 rng.random_range(0..self.width) as usize,
@@ -179,9 +174,32 @@ impl TileMap {
                 safe_count -= 1;
             }
         }
+        // 敌方单位
+        while remaining_enemy > 0 {
+            let (x, y) = (
+                rng.random_range(0..self.width) as usize,
+                rng.random_range(0..self.height) as usize,
+            );
+            if let Tile::Grass = self[y][x] {
+                self[y][x] = Tile::Enemy(EnemyType::random());
+                remaining_enemy -= 1;
+            }
+        }
+        // 宝藏
+        while remaining_treasure > 0 {
+            let (x, y) = (
+                rng.random_range(0..self.width) as usize,
+                rng.random_range(0..self.height) as usize,
+            );
+            if let Tile::Grass = self[y][x] {
+                self[y][x] = Tile::Treasure;
+                remaining_treasure -= 1;
+            }
+        }
+        // 设置敌方临近单位
         for y in 0..self.height {
             for x in 0..self.width {
-                let coord = Coordinates { x: y, y: x };
+                let coord = Coordinates { x: x, y: y };
                 if let Tile::Grass = self[y as usize][x as usize] {
                     let health = self.enemy_health_at(coord);
                     if health > 0 {

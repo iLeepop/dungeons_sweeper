@@ -12,6 +12,8 @@ pub struct BoardOption {
     pub tile_size: TileSize,
     pub padding: u32,
     pub counter_font: Handle<Font>,
+    /// 关卡难度系数，用于 `EnemyType::health/damage/defense` 中的 `base + k * difficulty_factor`。
+    pub difficulty_factor: f32,
     pub safe_count: u16,
     pub out_way_count: u16,
     pub monster_count: u16,
@@ -34,6 +36,7 @@ impl Default for BoardOption {
             tile_size: TileSize::default(),
             padding: 0,
             counter_font: Handle::default(),
+            difficulty_factor: 1.0,
             safe_count: 1,
             out_way_count: 1,
             monster_count: 10,
