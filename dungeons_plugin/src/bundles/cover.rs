@@ -1,9 +1,11 @@
+use crate::components::TriggerTimes;
 use crate::resources::board_option::TileSize;
 use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
 pub fn cover(tile_size: TileSize, padding: u32) -> impl Bundle {
     return (
+        TriggerTimes::default(),
         Sprite {
             color: Color::WHITE,
             custom_size: Some(Vec2::new(

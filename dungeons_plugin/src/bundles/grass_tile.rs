@@ -2,7 +2,7 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
-use crate::components::Grass;
+use crate::components::{Grass, TriggerTimes};
 use crate::resources::board_option::TileSize;
 
 pub fn grass_bundle(
@@ -30,6 +30,7 @@ pub fn grass_bundle(
         },
         coord,
         Grass,
+        TriggerTimes::default(),
         children![],
     );
 }

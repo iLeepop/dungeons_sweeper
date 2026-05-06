@@ -1,7 +1,7 @@
 use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
-use crate::components::{Coordinates, Damage, Defense, Enemy, Health};
+use crate::components::{Coordinates, Damage, Defense, Enemy, Health, TriggerTimes};
 use crate::resources::board_option::TileSize;
 use crate::resources::enemy_assets::EnemyAssets;
 use crate::resources::enemy_type::EnemyType;

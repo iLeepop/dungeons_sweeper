@@ -3,9 +3,11 @@ use bevy::log;
 use bevy::prelude::*;
 
 use crate::components::Exposed;
+use crate::components::TriggerTimes;
 use crate::components::{
     Damage, Defense, Enemy, EnemyNeighbor, Grass, Health, Treasure, OutWay, Uncover,
 };
+use crate::events::enemy_event::EnemyAttackEvent;
 use crate::events::taggle::ToggleEvent;
 use crate::resources::board::Board;
 
@@ -19,6 +21,7 @@ pub fn taggle_consumer(
         Option<&Grass>,
         Option<&Treasure>,
         Option<&OutWay>,
+        Option<&TriggerTimes>,
     )>,
     status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>,
     parent: Query<&ChildOf>,
@@ -39,19 +42,32 @@ pub fn taggle_consumer(
         commands.entity(parent.0).insert(Exposed);
         commands.entity(*cover).insert(Uncover);
         board.covers.remove(&event.0);
+        commands.trigger(EnemyAttackEvent);
         return;
     }
     if let Some(tile) = board.tiles.get(&event.0) {
         #[cfg(feature = "debug")]
         log::info!("despawn tile: {:?}", *tile);
 
-        let (enemy, enemy_neighbor, grass, treasure, out_way) = match tile_type.get(*tile) {
+        let (enemy, enemy_neighbor, grass, treasure, out_way, times) = match tile_type.get(*tile) {
             Ok(v) => v,
             Err(e) => {
                 log::error!("Error getting tile: {:?}", e);
                 return;
             }
         };
+
+        if times.is_some() {
+            let mut t = times.unwrap().0;
+            if t > 0 {
+                log::info!("tile triggered");
+                t -= 1;
+                commands.entity(*tile).insert(TriggerTimes::new(t));
+            } else {
+                log::info!("tile is triggered over times");
+                return;
+            }
+        }
 
         if enemy.is_some() {
             // 获取属性组件
@@ -81,5 +97,7 @@ pub fn taggle_consumer(
         if out_way.is_some() {
             log::info!("you get out way");
         }
+        commands.trigger(EnemyAttackEvent);
+
     }
 }

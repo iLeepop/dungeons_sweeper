@@ -2,7 +2,7 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
-use crate::components::OutWay;
+use crate::components::{OutWay, TriggerTimes};
 use crate::resources::board_option::TileSize;
 
 pub fn out_way_bundle(
@@ -30,6 +30,7 @@ pub fn out_way_bundle(
         },
         coord,
         OutWay,
+        TriggerTimes::default(),
         children![],
     );
 }

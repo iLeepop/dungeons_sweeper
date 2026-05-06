@@ -7,6 +7,7 @@ pub mod view;
 pub mod tiles;
 pub mod entity_status;
 pub mod effects;
+pub mod trigger;
 
 pub use coordinates::*;
 pub use exposed::*;
@@ -16,3 +17,4 @@ pub use view::*;
 pub use tiles::*;
 pub use entity_status::*;
 pub use effects::*;
+pub use trigger::*;

@@ -27,7 +27,6 @@ pub fn input_handler(
             log::info!("coordinates: {:?}", coordinates);
             commands.trigger(ToggleEvent(coordinates));
         }
-        commands.trigger(EnemyAttackEvent);
     } else if input.just_pressed(MouseButton::Right) {
         let position = match window.cursor_position() {
             Some(position) => position,
