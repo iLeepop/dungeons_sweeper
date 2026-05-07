@@ -2,7 +2,7 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
-use crate::components::{EnemyNeighbor, TriggerTimes};
+use crate::components::{EnemyNeighbor, TriggerRemaining};
 use crate::resources::board_option::TileSize;
 
 pub fn enemy_neighbor_bundle(
@@ -14,7 +14,7 @@ pub fn enemy_neighbor_bundle(
     counter_font: &Handle<Font>,
 ) -> impl Bundle {
     return (
-        TriggerTimes::zero(),
+        TriggerRemaining::zero(),
         Name::new(format!("Tile_{}", coord)),
         Transform::from_xyz(
             (coord.x as f32 * tile_size.width as f32 + tile_size.width as f32 / 2.0)

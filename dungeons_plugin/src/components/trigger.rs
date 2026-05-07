@@ -1,20 +1,31 @@
 use bevy::prelude::*;
 
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
-pub struct TriggerTimes(pub u8);
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Reflect)]
+pub enum RemainingType {
+    Zero,
+    UnLimit,
+    Limit(u8),
+}
 
-impl TriggerTimes {
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Component, Reflect)]
+pub struct TriggerRemaining(pub RemainingType);
+
+impl TriggerRemaining {
     pub fn new(times: u8) -> Self {
-        TriggerTimes(times)
+        TriggerRemaining(RemainingType::Limit(times))
     }
 
     pub fn zero() -> Self {
-        TriggerTimes(0)
+        TriggerRemaining(RemainingType::Zero)
+    }
+
+    pub fn unlimit() -> Self {
+        TriggerRemaining(RemainingType::UnLimit)
     }
 }
 
-impl Default for TriggerTimes {
+impl Default for TriggerRemaining {
     fn default() -> Self {
-        TriggerTimes(1)
+        TriggerRemaining(RemainingType::Limit(1))
     }
 }

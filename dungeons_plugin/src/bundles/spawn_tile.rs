@@ -1,7 +1,7 @@
 use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
-use crate::components::{Safe, TriggerTimes};
+use crate::components::{Safe, TriggerRemaining};
 use crate::components::coordinates::Coordinates;
 use crate::resources::board_option::TileSize;
 
@@ -30,7 +30,7 @@ pub fn spawn_bundle(
         },
         coord,
         Safe,
-        TriggerTimes::zero(),
+        TriggerRemaining::zero(),
         children![],
     );
 }

@@ -1,7 +1,7 @@
 use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
-use crate::components::{Coordinates, Damage, Defense, Enemy, Health, TriggerTimes};
+use crate::components::{Coordinates, Damage, Defense, Enemy, Health, TriggerRemaining};
 use crate::resources::board_option::TileSize;
 use crate::resources::enemy_assets::EnemyAssets;
 use crate::resources::enemy_type::EnemyType;
@@ -38,6 +38,7 @@ pub fn enemy_bundle(
         },
         coord,
         Enemy,
+        TriggerRemaining::unlimit(),
         Health(enemy_type.health(difficulty_factor)),
         Damage(enemy_type.damage(difficulty_factor)),
         Defense(enemy_type.defense(difficulty_factor)),

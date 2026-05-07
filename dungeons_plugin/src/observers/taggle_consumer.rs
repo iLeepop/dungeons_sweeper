@@ -3,7 +3,8 @@ use bevy::log;
 use bevy::prelude::*;
 
 use crate::components::Exposed;
-use crate::components::TriggerTimes;
+use crate::components::RemainingType;
+use crate::components::TriggerRemaining;
 use crate::components::{
     Damage, Defense, Enemy, EnemyNeighbor, Grass, Health, Treasure, OutWay, Uncover,
 };
@@ -21,7 +22,7 @@ pub fn taggle_consumer(
         Option<&Grass>,
         Option<&Treasure>,
         Option<&OutWay>,
-        Option<&TriggerTimes>,
+        Option<&TriggerRemaining>,
     )>,
     status: Query<(Option<&Health>, Option<&Damage>, Option<&Defense>)>,
     parent: Query<&ChildOf>,
@@ -58,14 +59,20 @@ pub fn taggle_consumer(
         };
 
         if times.is_some() {
-            let mut t = times.unwrap().0;
-            if t > 0 {
-                log::info!("tile triggered");
-                t -= 1;
-                commands.entity(*tile).insert(TriggerTimes::new(t));
-            } else {
-                log::info!("tile is triggered over times");
-                return;
+            let r = times.unwrap().0;
+            match r {
+                RemainingType::Zero => return,
+                RemainingType::UnLimit => (),
+                RemainingType::Limit(mut t) => {
+                    if t > 0 {
+                        log::info!("tile triggered");
+                        t -= 1;
+                        commands.entity(*tile).insert(TriggerRemaining::new(t));
+                    } else {
+                        log::info!("tile is triggered over times");
+                        return;
+                    }
+                }
             }
         }
 
