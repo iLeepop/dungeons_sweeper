@@ -4,13 +4,15 @@ use bevy::prelude::*;
 use crate::components::coordinates::Coordinates;
 use crate::components::{EnemyNeighbor, TriggerRemaining};
 use crate::resources::board_option::TileSize;
+use crate::resources::tile_map::enemy_neighbor_display_label;
 
 pub fn enemy_neighbor_bundle(
     coord: Coordinates,
     tile_size: TileSize,
     padding: u32,
     board_size: Vec3,
-    count: u8,
+    // 邻格敌方 HP 总和（用于 enemy_neighbor_display_label）。
+    hp_sum_display: u32,
     counter_font: &Handle<Font>,
 ) -> impl Bundle {
     return (
@@ -34,7 +36,7 @@ pub fn enemy_neighbor_bundle(
         coord,
         EnemyNeighbor,
         children![(
-            Text2d::new(count.to_string()),
+            Text2d::new(enemy_neighbor_display_label(hp_sum_display)),
             TextFont {
                 font: counter_font.clone(),
                 font_size: 10.0,

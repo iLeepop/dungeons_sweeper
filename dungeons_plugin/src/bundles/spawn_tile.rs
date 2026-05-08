@@ -1,10 +1,11 @@
 use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
-use crate::components::{Safe, TriggerRemaining};
+use crate::components::{Spawn, TriggerRemaining};
 use crate::components::coordinates::Coordinates;
 use crate::resources::board_option::TileSize;
 
+// 出生点地块
 pub fn spawn_bundle(
     coord: Coordinates,
     tile_size: TileSize,
@@ -29,7 +30,7 @@ pub fn spawn_bundle(
             ..Default::default()
         },
         coord,
-        Safe,
+        Spawn,
         TriggerRemaining::zero(),
         children![],
     );

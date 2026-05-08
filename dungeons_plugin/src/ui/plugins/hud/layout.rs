@@ -21,13 +21,14 @@ pub fn build_hud(mut commands: Commands, ui_assets: Res<UiAssets>) -> Entity {
             Ui,
             Hud,
             Node {
-                width: Val::Px(150.0),
-                height: Val::Px(50.0),
+                width: Val::Px(170.0),
+                height: Val::Px(118.0),
                 left: Val::Px(10.0),
                 top: Val::Px(10.0),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
                 flex_direction: FlexDirection::Column,
+                row_gap: Val::Px(4.0),
                 position_type: PositionType::Relative,
                 ..Default::default()
             },
@@ -36,9 +37,9 @@ pub fn build_hud(mut commands: Commands, ui_assets: Res<UiAssets>) -> Entity {
             GlobalZIndex(2),
             children![
                 (
-                    Text::new("HP"),
+                    Text::new("血量: —\n护盾: —\n攻击力: —\n金币: —\n宝石: —"),
                     TextFont {
-                        font_size: 14.0,
+                        font_size: 12.0,
                         font: ui_assets.font.clone(),
                         ..Default::default()
                     },
@@ -53,15 +54,11 @@ pub fn build_hud(mut commands: Commands, ui_assets: Res<UiAssets>) -> Entity {
                 (
                     HPProgressBar,
                     Sprite {
-                        rect: Some(Rect { min: Vec2::new(10., 20.), max: Vec2::new(10., 20.), }),
-                        color: Color::srgb(0.9, 0.0, 0.0),
+                        color: Color::srgb(0.85, 0.1, 0.1),
+                        custom_size: Some(Vec2::new(100.0, 6.0)),
                         ..Default::default()
                     },
-                    Transform {
-                        translation: Vec3::new(0., 0., 1.),
-                        rotation: Quat::from_rotation_z(0.),
-                        scale: Vec3::new(1., 1., 1.),
-                    }
+                    Transform::from_xyz(0., 0., 1.),
                 )
             ],
         ))

@@ -16,5 +16,5 @@ pub use uncover::*;
 pub use view::*;
 pub use tiles::*;
 pub use entity_status::*;
-pub use effects::*;
+pub use effects::Effect;
 pub use trigger::*;

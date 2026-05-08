@@ -1,5 +1,6 @@
 mod bundles;
 mod components;
+pub mod effects;
 mod events;
 mod observers;
 pub mod resources;
@@ -12,10 +13,14 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::bundles::{
-    cover, enemy_bundle, enemy_neighbor_bundle, grass_bundle, item_bundle, out_way_bundle,
+    cover, enemy_bundle, enemy_neighbor_bundle, GrassTile, item_bundle, out_way_bundle,
     player_bundle, safe_bundle, spawn_bundle,
 };
 use crate::components::{Coordinates, View};
+use crate::effects::effect_phase_dispatch_system;
+use crate::effects::EffectPhaseMessage;
+use crate::effects::EffectCounters;
+use crate::effects::{WorldEffectHost, WorldEffectLoader};
 use crate::observers::{enemy_havier_handler, player_action, taggle_consumer, view_move_consumer};
 use crate::resources::board::Board;
 use crate::resources::apply_stage_to_board_option;
@@ -29,6 +34,7 @@ use crate::resources::view2d::View2d;
 use crate::systems::{input_handler, keyboard_input_handler, uncover_tile};
 use crate::ui::GameUIPlugin;
 use crate::ui::UiAssets;
+use crate::ui::sync_player_hud_from_components;
 use crate::utils::bounds::Bounds2;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, States, Default)]
@@ -61,6 +67,18 @@ impl Plugin for DungeonsPlugin {
         );
 
         app.add_plugins(GameUIPlugin);
+
+        app.add_message::<EffectPhaseMessage>()
+            .init_resource::<EffectCounters>()
+            .add_systems(
+                PostUpdate,
+                (
+                    effect_phase_dispatch_system,
+                    sync_player_hud_from_components,
+                )
+                    .chain()
+                    .run_if(in_state(AppState::InGame)),
+            );
 
         app.add_systems(Startup, Self::setup_camera)
             .add_systems(
@@ -119,6 +137,13 @@ impl DungeonsPlugin {
         enemy_assets: Res<EnemyAssets>,
         mut next_state: ResMut<NextState<AppState>>,
     ) {
+        // --- 世界级效果宿主：手动挂载全局/跨格效果列表 ---
+        commands.spawn((
+            Name::new("WorldEffectHost"),
+            WorldEffectHost,
+            WorldEffectLoader::default(),
+        ));
+
         let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
         tile_map.set_additem(
             board_options.safe_count,
@@ -247,7 +272,7 @@ impl DungeonsPlugin {
                         tiles.insert(
                             coord,
                             commands
-                                .spawn(grass_bundle(coord, tile_size, padding, board_size))
+                                .spawn(GrassTile::grass_bundle(coord, tile_size, padding, board_size))
                                 .with_children(|parent| {
                                     let cover = parent.spawn(cover(tile_size, padding)).id();
                                     covers.insert(coord, cover);
@@ -275,7 +300,7 @@ impl DungeonsPlugin {
                                 .id(),
                         );
                     }
-                    Tile::EnemyNeighbor(count) => {
+                    Tile::EnemyNeighbor(hp_sum) => {
                         tiles.insert(
                             coord,
                             commands
@@ -284,7 +309,7 @@ impl DungeonsPlugin {
                                     tile_size,
                                     padding,
                                     board_size,
-                                    *count,
+                                    u32::from(*hp_sum),
                                     counter_font,
                                 ))
                                 .with_children(|parent| {

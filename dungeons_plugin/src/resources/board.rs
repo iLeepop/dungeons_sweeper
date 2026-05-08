@@ -3,6 +3,8 @@ use bevy::prelude::*;
 use std::collections::HashMap;
 
 use crate::components::coordinates::Coordinates;
+use crate::components::Enemy;
+use crate::components::entity_status::Health;
 use crate::resources::board_option::TileSize;
 use crate::resources::tile_map::TileMap;
 use crate::utils::bounds::Bounds2;
@@ -18,6 +20,20 @@ pub struct Board {
 }
 
 impl Board {
+    /// 与 [`TileMap::safe_square_at`] 一致遍历 `coord` 的 8 邻格，累加仍为敌方实体上的 [`Health`]（不含 `coord` 本格）。
+    pub fn adjacent_enemy_hp_sum_from_entities(
+        &self,
+        coord: Coordinates,
+        enemy_health: &Query<&Health, With<Enemy>>,
+    ) -> u32 {
+        self.tile_map
+            .safe_square_at(coord)
+            .filter_map(|c| self.tiles.get(&c).copied())
+            .filter_map(|entity| enemy_health.get(entity).ok())
+            .map(|h| (h.0.max(0)) as u32)
+            .sum()
+    }
+
     pub fn on_board_position(
         &self,
         window: Single<&mut Window>,

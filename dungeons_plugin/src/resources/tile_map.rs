@@ -37,6 +37,15 @@ impl Default for TileMap {
     }
 }
 
+/// 临近敌方格 [`Text2d`] 文案：**邻格敌方 HP 之和为 0 时显示空字符串**。
+pub fn enemy_neighbor_display_label(hp_sum: u32) -> String {
+    if hp_sum == 0 {
+        String::new()
+    } else {
+        hp_sum.to_string()
+    }
+}
+
 impl TileMap {
     pub fn new(width: u32, height: u32) -> Self {
         let tiles = vec![vec![Tile::default(); height as usize]; width as usize];
@@ -105,11 +114,12 @@ impl TileMap {
             .map(move |tuple| coordinates + tuple)
     }
 
-    pub fn enemy_health_at(&self, coordinates: Coordinates) -> i8 {
+    /// 生成地图用：8 邻格内 [`Tile::Enemy`] 的 **类型默认血量** 之和（与实体生成后的初始 HP 一致）。
+    pub fn enemy_health_at(&self, coordinates: Coordinates) -> i32 {
         self.safe_square_at(coordinates)
             .filter_map(|coord| {
                 self.get_tile(coord).map(|tile| match tile {
-                    Tile::Enemy(enemy_type) => enemy_type.health(self.difficulty_factor),
+                    Tile::Enemy(enemy_type) => enemy_type.health(self.difficulty_factor) as i32,
                     _ => 0,
                 })
             })
@@ -203,7 +213,8 @@ impl TileMap {
                 if let Tile::Grass = self[y as usize][x as usize] {
                     let health = self.enemy_health_at(coord);
                     if health > 0 {
-                        self[y as usize][x as usize] = Tile::EnemyNeighbor(health as u8);
+                        let v = health.clamp(1, i32::from(u16::MAX)) as u16;
+                        self[y as usize][x as usize] = Tile::EnemyNeighbor(v);
                     }
                 }
             }

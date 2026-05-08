@@ -34,12 +34,6 @@ impl Plugin for HudPlugin {
                     entered: AppState::PreGame,
                 },
                 despawn_hud,
-            )
-            .add_systems(
-                Update, 
-                change_hp_bar
-                .run_if(in_state(AppState::InGame))
-            )
-            .add_message::<HPBarChangeMessage>();
+            );
     }
 }
