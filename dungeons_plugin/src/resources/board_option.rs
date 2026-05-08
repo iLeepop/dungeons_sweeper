@@ -6,7 +6,8 @@ pub struct TileSize {
     pub height: u32,
 }
 
-#[derive(Resource)]
+/// 棋盘尺寸与计数；出口延后重建时需 `Clone` 以便与帧末刷新系统配合。
+#[derive(Clone, Resource)]
 pub struct BoardOption {
     pub map_size: (u32, u32),
     pub tile_size: TileSize,

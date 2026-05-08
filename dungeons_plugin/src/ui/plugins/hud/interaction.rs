@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::components::{Damage, Defense, Gem, GoldCoin, Health, Player};
-use crate::effects::PLAYER_HP_MAX;
+use crate::resources::PlayerOptions;
 use crate::ui::plugins::hud::{HPBar, HPProgressBar};
 
 // ---------------------------------------------------------------------------
@@ -15,6 +15,7 @@ use crate::ui::plugins::hud::{HPBar, HPProgressBar};
 /// 不依赖事件或 Message，因此草地回血（效果系统）与受伤（`PlayerHurt`）以任意顺序改组件后，
 /// 同一帧末尾仍会显示一致数值。
 pub fn sync_player_hud_from_components(
+    player_options: Res<PlayerOptions>,
     player: Single<Entity, With<Player>>,
     status: Query<
         (
@@ -38,15 +39,16 @@ pub fn sync_player_hud_from_components(
     let atk = damage.map(|d| d.0).unwrap_or(0);
     let coins = gold.map(|g| g.0).unwrap_or(0);
     let gems = gem.map(|g| g.0).unwrap_or(0);
+    let hp_max = player_options.max_hp;
 
     // --- 多行文本：血量 / 护盾 / 攻击力 / 金币 / 宝石 ---
     hp_line.0 = format!(
         "血量: {}/{}\n护盾: {}\n攻击力: {}\n金币: {}\n宝石: {}",
-        hp, PLAYER_HP_MAX, def, atk, coins, gems
+        hp, hp_max, def, atk, coins, gems
     );
 
     // --- 血条：按当前血量比例缩放 X（与 layout 中精灵 `custom_size.x` 一致） ---
-    let ratio = (hp as f32 / PLAYER_HP_MAX as f32).clamp(0.0, 1.0);
+    let ratio = (hp as f32 / hp_max.max(1) as f32).clamp(0.0, 1.0);
     for mut xf in prog_transform.iter_mut() {
         xf.scale.x = ratio.max(0.001);
         xf.scale.y = 1.0;

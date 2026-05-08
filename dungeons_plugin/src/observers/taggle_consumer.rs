@@ -2,12 +2,13 @@ use bevy::ecs::observer::On;
 use bevy::log;
 use bevy::prelude::*;
 
+use crate::AppState;
 use crate::bundles::enemy_neighbor_bundle;
 use crate::components::Exposed;
 use crate::components::TriggerRemaining;
 use crate::components::{
-    Coordinates, Damage, Enemy, EnemyNeighbor, GoldCoin, Grass, Health, OutWay, Player, Treasure,
-    Uncover,
+    Coordinates, Damage, Enemy, EnemyNeighbor, GoldCoin, Grass, Health, OutWay, Player, Safe,
+    Treasure, Uncover,
 };
 use crate::effects::EffectCounters;
 use crate::effects::EffectPhase;
@@ -18,12 +19,16 @@ use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
 use crate::resources::tile::Tile;
 use crate::resources::tile_map::enemy_neighbor_display_label;
+use crate::resources::{PendingBoardRebuild, PlayerOptions};
 
 pub fn taggle_consumer(
     event: On<ToggleEvent>,
     mut commands: Commands,
     mut board: ResMut<Board>,
-    board_options: Res<BoardOption>,
+    board_option: Res<BoardOption>,
+    player_options: Res<PlayerOptions>,
+    mut pending_board: ResMut<PendingBoardRebuild>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut effect_counters: ResMut<EffectCounters>,
     mut effect_phase_writer: MessageWriter<EffectPhaseMessage>,
     tile_type: Query<(
@@ -32,12 +37,16 @@ pub fn taggle_consumer(
         Option<&Grass>,
         Option<&Treasure>,
         Option<&OutWay>,
+        Option<&Safe>,
     )>,
     mut trigger_remaining: Query<&mut TriggerRemaining>,
-    mut enemy_health_rw: ParamSet<(Query<&mut Health, With<Enemy>>, Query<&Health, With<Enemy>>)>,
+    // Bevy 无法证明「敌方 Health」与「玩家 Health」互斥，必须放进同一 ParamSet（错误 B0001）。
+    mut health_queries: ParamSet<(
+        Query<&mut Health, With<Enemy>>,
+        Query<&Health, With<Enemy>>,
+        Query<(&mut Health, &mut Damage, &mut GoldCoin), With<Player>>,
+    )>,
     player_entity: Single<Entity, With<Player>>,
-    player_damage: Query<&Damage, With<Player>>,
-    mut player_gold: Query<&mut GoldCoin, With<Player>>,
     parent: Query<&ChildOf>,
     children_q: Query<&Children>,
     mut text2d_q: Query<&mut Text2d>,
@@ -68,7 +77,7 @@ pub fn taggle_consumer(
     #[cfg(feature = "debug")]
     log::info!("despawn tile: {:?}", tile_ent);
 
-    let (enemy, enemy_neighbor, grass, treasure, out_way) = match tile_type.get(tile_ent) {
+    let (enemy, enemy_neighbor, grass, treasure, out_way, safe) = match tile_type.get(tile_ent) {
         Ok(v) => v,
         Err(e) => {
             log::error!("Error getting tile: {:?}", e);
@@ -87,18 +96,58 @@ pub fn taggle_consumer(
     }
 
     // ---------------------------------------------------------------------------
+    // 出口：升关、刷新 BoardOption 计数，帧末重建棋盘并暂停（见 [`crate::flush_pending_board_rebuild`]）
+    // ---------------------------------------------------------------------------
+    if out_way.is_some() {
+        // 升关与 `BoardOption` 刷新在帧末 [`crate::flush_pending_board_rebuild`]，减轻 Observer 参数数量。
+        pending_board.0 = true;
+        next_state.set(AppState::GamePause);
+        return;
+    }
+
+    // ---------------------------------------------------------------------------
+    // 安全点：按 [`PlayerOptions::safe_heal_per_trigger`] 回血，不超过生命上限
+    // ---------------------------------------------------------------------------
+    if safe.is_some() {
+        if let Ok((mut hp, _, _)) = health_queries.p2().get_mut(*player_entity) {
+            let add = player_options.safe_heal_per_trigger as i32;
+            let cap = player_options.max_hp as i32;
+            hp.0 = (hp.0 as i32 + add)
+                .min(cap)
+                .clamp(i8::MIN as i32, i8::MAX as i32) as i8;
+        }
+    }
+
+    // ---------------------------------------------------------------------------
+    // 宝藏：永久增加攻击力（饱和加法）
+    // ---------------------------------------------------------------------------
+    if treasure.is_some() {
+        if let Ok((_, mut dmg, _)) = health_queries.p2().get_mut(*player_entity) {
+            dmg.0 = dmg
+                .0
+                .saturating_add(player_options.treasure_damage_bonus);
+        }
+    }
+
+    // ---------------------------------------------------------------------------
     // 玩家攻击敌方格（须在效果广播之前结算，避免与其它 System 对 [`Health`] 的写入顺序混淆）
     // ---------------------------------------------------------------------------
     if enemy.is_some() {
         let coord = event.0;
-        if let Ok(player_atk) = player_damage.get(*player_entity) {
-            let killed_opt = match enemy_health_rw.p0().get_mut(tile_ent) {
+        let player_atk = match health_queries.p2().get(*player_entity) {
+            Ok((_, dmg, _)) => dmg.0,
+            Err(_) => {
+                log::error!("player has no Damage component");
+                return;
+            }
+        };
+        let killed_opt = match health_queries.p0().get_mut(tile_ent) {
                 Ok(mut enemy_hp) => {
-                    apply_player_damage_to_enemy_health(&mut enemy_hp, player_atk.0);
+                    apply_player_damage_to_enemy_health(&mut enemy_hp, player_atk);
                     #[cfg(feature = "debug")]
                     log::info!(
                         "player attacks enemy: atk={}, enemy hp={}",
-                        player_atk.0,
+                        player_atk,
                         enemy_hp.0,
                     );
                     Some(enemy_hp.0 <= 0)
@@ -112,7 +161,7 @@ pub fn taggle_consumer(
             if let Some(killed) = killed_opt {
                 if killed {
                 let hp_sum_neighborhood =
-                    board.adjacent_enemy_hp_sum_from_entities(coord, &enemy_health_rw.p1());
+                    board.adjacent_enemy_hp_sum_from_entities(coord, &health_queries.p1());
                 let stored = hp_sum_neighborhood.min(u16::MAX as u32) as u16;
                 if let Some(cell) = board.tile_map.get_tile_mut(coord) {
                     *cell = Tile::EnemyNeighbor(stored);
@@ -133,17 +182,17 @@ pub fn taggle_consumer(
                         .spawn(enemy_neighbor_bundle(
                             coord,
                             board.tile_size,
-                            board_options.padding,
+                            board_option.padding,
                             board_size,
                             hp_sum_neighborhood,
-                            &board_options.counter_font,
+                            &board_option.counter_font,
                         ))
                         .id();
                     commands.entity(new_ent).insert(ChildOf(board_parent));
 
                     board.tiles.insert(coord, new_ent);
 
-                    if let Ok(mut gold) = player_gold.get_mut(*player_entity) {
+                    if let Ok((_, _, mut gold)) = health_queries.p2().get_mut(*player_entity) {
                         gold.0 = gold.0.saturating_add(1);
                     }
                 } else {
@@ -156,14 +205,11 @@ pub fn taggle_consumer(
                 refresh_enemy_neighbor_displays_around(
                     coord,
                     &mut board,
-                    &enemy_health_rw.p1(),
+                    &health_queries.p1(),
                     &children_q,
                     &mut text2d_q,
                 );
             }
-        } else {
-            log::error!("player has no Damage component");
-        }
     }
 
     // --- 效果系统：格子触发计数 + 广播「玩家已触发该格」阶段（具体执行在 PostUpdate） ---
@@ -184,13 +230,6 @@ pub fn taggle_consumer(
         log::info!("you get on grass wuth health increase");
     }
 
-    if treasure.is_some() {
-        log::info!("you get item");
-    }
-
-    if out_way.is_some() {
-        log::info!("you get out way");
-    }
     commands.trigger(EnemyAttackEvent);
 }
 

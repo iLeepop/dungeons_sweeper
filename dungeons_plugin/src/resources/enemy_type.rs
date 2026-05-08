@@ -31,6 +31,9 @@ pub enum EnemyType {
 }
 
 impl EnemyType {
+    /// 枚举变体数量（与 `BASE_ENEMY_HEALTH` 等数组长度一致）。
+    pub const VARIANT_COUNT: usize = 15;
+
     /// 与 `BASE_ENEMY_*` / `HP_K` 等常量数组下标一致。
     pub const fn index(self) -> usize {
         match self {
@@ -49,6 +52,33 @@ impl EnemyType {
             EnemyType::MushMan => 12,
             EnemyType::Slim => 13,
             EnemyType::EliteSlim => 14,
+        }
+    }
+
+    /// [`Self::index`] 的别名，便于难度预算模块读写档位。
+    #[inline]
+    pub const fn discriminant_index(self) -> usize {
+        self.index()
+    }
+
+    /// 从下标还原类型；越界时回落到最弱档，避免生成逻辑 panic。
+    pub fn from_discriminant_index(i: usize) -> Self {
+        match i.clamp(0, Self::VARIANT_COUNT.saturating_sub(1)) {
+            0 => EnemyType::Eye,
+            1 => EnemyType::MagicEye,
+            2 => EnemyType::Swamp,
+            3 => EnemyType::BlueGiant,
+            4 => EnemyType::RedGiant,
+            5 => EnemyType::Yeti,
+            6 => EnemyType::EliteYeti,
+            7 => EnemyType::Cyclops,
+            8 => EnemyType::Gonin,
+            9 => EnemyType::DoubleGonin,
+            10 => EnemyType::TinyMush,
+            11 => EnemyType::BigMush,
+            12 => EnemyType::MushMan,
+            13 => EnemyType::Slim,
+            _ => EnemyType::EliteSlim,
         }
     }
 

@@ -54,6 +54,8 @@ pub struct TileEffectContext<'w, 's, 'a> {
     pub player: Entity,
     pub tile_health: Option<Mut<'a, Health>>,
     pub player_health: Option<Mut<'a, Health>>,
+    /// 本局生命上限（来自 [`crate::resources::PlayerOptions::max_hp`]），草地回血等效果封顶用。
+    pub player_hp_cap: i8,
 }
 
 // ---------------------------------------------------------------------------

@@ -5,7 +5,11 @@ use std::ops::{Deref, DerefMut};
 
 use crate::{
     components::coordinates::Coordinates,
-    resources::{enemy_type::EnemyType, tile::Tile},
+    resources::{
+        difficulty_balance::{balance_enemy_loadout, max_enemy_discriminant_index, pick_weighted_enemy_type},
+        player_options::{DifficultyTuning, PlayerOptions},
+        tile::Tile,
+    },
 };
 
 const SQUARE_COORDINATES: [(i8, i8); 8] = [
@@ -126,6 +130,7 @@ impl TileMap {
             .sum()
     }
 
+    /// 随机铺设特殊格与敌方；`stage` / `player_options` / `tuning` 用于档位抽样与总血量预算。
     pub fn set_additem(
         &mut self,
         safe_count: u16,
@@ -133,6 +138,9 @@ impl TileMap {
         enemy_count: u16,
         treasure_count: u16,
         difficulty_factor: f32,
+        stage: u32,
+        player_options: &PlayerOptions,
+        tuning: &DifficultyTuning,
     ) {
         self.difficulty_factor = difficulty_factor;
         if (1 + safe_count + out_way_count + enemy_count + treasure_count) as u32
@@ -153,6 +161,7 @@ impl TileMap {
         let mut one_way_out = out_way_count;
         let mut safe_count = safe_count;
         let mut rng = rng();
+        let max_tier = max_enemy_discriminant_index(stage);
         // 出生点（不占用 monster_count）
         {
             let (x, y) = (
@@ -191,7 +200,8 @@ impl TileMap {
                 rng.random_range(0..self.height) as usize,
             );
             if let Tile::Grass = self[y][x] {
-                self[y][x] = Tile::Enemy(EnemyType::random());
+                // 偏弱加权 + 阶段封顶：避免低关卡刷出满档血牛。
+                self[y][x] = Tile::Enemy(pick_weighted_enemy_type(max_tier, &mut rng));
                 remaining_enemy -= 1;
             }
         }
@@ -206,6 +216,20 @@ impl TileMap {
                 remaining_treasure -= 1;
             }
         }
+
+        // --- 总血量预算：在转为 EnemyNeighbor 之前，按需降级怪物类型 ---
+        let grass_tile_count = self.count_grass_tiles();
+        balance_enemy_loadout(
+            self,
+            difficulty_factor,
+            enemy_count,
+            treasure_count,
+            safe_count,
+            grass_tile_count,
+            player_options,
+            tuning,
+        );
+
         // 设置敌方临近单位
         for y in 0..self.height {
             for x in 0..self.width {
@@ -219,6 +243,19 @@ impl TileMap {
                 }
             }
         }
+    }
+
+    /// 转为邻格提示之前统计仍为草地的格子数（用于估算草地总回复）。
+    fn count_grass_tiles(&self) -> u32 {
+        let mut n = 0u32;
+        for row in self.tiles().iter() {
+            for t in row.iter() {
+                if matches!(t, Tile::Grass) {
+                    n += 1;
+                }
+            }
+        }
+        n
     }
 }
 

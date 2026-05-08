@@ -16,18 +16,20 @@ use crate::resources::board_option::TileSize;
 pub struct GrassTile;
 
 impl GrassTile {
+    /// `grass_heal` 通常取自 [`crate::resources::PlayerOptions::grass_heal_per_trigger`]。
     pub fn grass_bundle(
         coord: Coordinates,
         tile_size: TileSize,
         padding: u32,
         board_size: Vec3,
+        grass_heal: i8,
     ) -> impl Bundle {
         // --- 地块效果：在「玩家触发该格」阶段为玩家加血（具体调度见 `effect_phase_dispatch_system`） ---
         let mut tile_effects = TileEffectLoader::default();
         tile_effects.push(EffectEntry::new(
             0,
             EffectTrigger::OnPhase(EffectPhase::AfterPlayerTileTrigger),
-            GrassHealPlayer(1),
+            GrassHealPlayer(grass_heal),
         ));
 
         (

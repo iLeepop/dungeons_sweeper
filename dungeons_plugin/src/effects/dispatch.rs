@@ -23,6 +23,7 @@ use crate::effects::loaders::{
 };
 use crate::effects::trigger::EffectPhase;
 use crate::resources::board::Board;
+use crate::resources::PlayerOptions;
 
 // ---------------------------------------------------------------------------
 // 跨系统传递的调度消息
@@ -95,6 +96,7 @@ fn collect_from_loader(
 pub fn effect_phase_dispatch_system(
     mut reader: MessageReader<EffectPhaseMessage>,
     board: Res<Board>,
+    player_options: Res<PlayerOptions>,
     counters: Res<EffectCounters>,
     mut commands: Commands,
     player_entity: Single<Entity, With<Player>>,
@@ -234,6 +236,7 @@ pub fn effect_phase_dispatch_system(
                         player: player_ent,
                         tile_health,
                         player_health,
+                        player_hp_cap: player_options.max_hp,
                     };
                     entry.behavior().apply_on_tile(&mut ctx);
                 }
