@@ -28,7 +28,6 @@ use crate::resources::DifficultyTuning;
 use crate::resources::EnemyType;
 use crate::resources::PlayerOptions;
 use crate::resources::board_option::{BoardOption, TileSize};
-use crate::resources::PendingBoardRebuild;
 use crate::resources::StageConfig;
 use crate::resources::enemy_assets::EnemyAssets;
 use crate::resources::tile::Tile;
@@ -50,6 +49,8 @@ pub enum AppState {
     RestartGame,
     BackMainMenu,
     GamePause,
+    /// 踩出口后：选 Continue 再升关并重建棋盘（与 Esc 暂停区分）。
+    NextLevel,
     GameOver,
 }
 
@@ -155,6 +156,32 @@ pub(crate) fn rebuild_board_entities(
     });
 }
 
+/// 进入下一关：升 `StageConfig`、刷新 [`BoardOption`] 计数、重建棋盘（由下一关菜单 Continue 调用）。
+pub fn advance_stage_and_rebuild_board(
+    commands: &mut Commands,
+    board_options: &mut BoardOption,
+    stage: &mut StageConfig,
+    enemy_assets: &EnemyAssets,
+    player_options: &PlayerOptions,
+    tuning: &DifficultyTuning,
+    world_hosts: &Query<Entity, With<WorldEffectHost>>,
+    board_entity_to_despawn: Option<Entity>,
+) {
+    stage.advance();
+    apply_stage_to_board_option(board_options, stage.stage);
+    rebuild_board_entities(
+        commands,
+        board_options,
+        enemy_assets,
+        player_options,
+        tuning,
+        stage.stage,
+        world_hosts,
+        board_entity_to_despawn,
+        player_options.grass_heal_per_trigger,
+    );
+}
+
 pub struct DungeonsPlugin {}
 
 impl Plugin for DungeonsPlugin {
@@ -175,7 +202,6 @@ impl Plugin for DungeonsPlugin {
 
         app.add_message::<EffectPhaseMessage>()
             .init_resource::<EffectCounters>()
-            .init_resource::<PendingBoardRebuild>()
             .add_systems(
                 PostUpdate,
                 effect_phase_dispatch_system.run_if(in_state(AppState::InGame)),
@@ -205,8 +231,7 @@ impl Plugin for DungeonsPlugin {
                     .chain()
                     .run_if(in_state(AppState::InGame)),
             )
-            .add_systems(PostUpdate, uncover_tile.run_if(in_state(AppState::InGame)))
-            .add_systems(PostUpdate, flush_pending_board_rebuild.after(uncover_tile));
+            .add_systems(PostUpdate, uncover_tile.run_if(in_state(AppState::InGame)));
 
         set_board_observer(app);
     }
@@ -412,38 +437,6 @@ fn setup_game(mut next_state: ResMut<NextState<AppState>>) {
 
 fn apply_stage_board_options(mut board: ResMut<BoardOption>, stage: Res<StageConfig>) {
     apply_stage_to_board_option(&mut board, stage.stage);
-}
-
-/// 帧末消费 [`PendingBoardRebuild`]，完成出口触发的棋盘重置（避免 Observer 内移除 `Board` 资源）。
-fn flush_pending_board_rebuild(
-    mut pending: ResMut<PendingBoardRebuild>,
-    mut commands: Commands,
-    mut board_options: ResMut<BoardOption>,
-    mut stage: ResMut<StageConfig>,
-    enemy_assets: Res<EnemyAssets>,
-    player_options: Res<PlayerOptions>,
-    tuning: Res<DifficultyTuning>,
-    existing_board: Option<Res<Board>>,
-    world_hosts: Query<Entity, With<WorldEffectHost>>,
-) {
-    if !pending.take_pending() {
-        return;
-    }
-    // 出口触发后置标记：此处升关并刷新棋盘计数，再按新阶段重建 TileMap。
-    stage.advance();
-    apply_stage_to_board_option(&mut board_options, stage.stage);
-    let board_ent = existing_board.as_ref().and_then(|b| b.board_entity);
-    rebuild_board_entities(
-        &mut commands,
-        board_options.as_ref(),
-        enemy_assets.as_ref(),
-        player_options.as_ref(),
-        tuning.as_ref(),
-        stage.stage,
-        &world_hosts,
-        board_ent,
-        player_options.grass_heal_per_trigger,
-    );
 }
 
 fn setup_board_options(

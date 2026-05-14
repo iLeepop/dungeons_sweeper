@@ -1,6 +1,7 @@
 use bevy::log;
 use bevy::prelude::*;
 
+use crate::AppState;
 use crate::components::{Damage, Defense, Health, Player};
 use crate::events::player::PlayerHurt;
 
@@ -12,6 +13,7 @@ pub fn player_action(
         Option<&mut Damage>,
         Option<&mut Defense>,
     )>,
+    mut next_state: ResMut<NextState<AppState>>,
 ) {
     #[cfg(feature = "debug")]
     log::info!("player action");
@@ -32,6 +34,7 @@ pub fn player_action(
                 if health.0 <= 0 {
                     #[cfg(feature = "debug")]
                     log::info!("player is dead");
+                    next_state.set(AppState::GameOver);
                 }
             }
         }

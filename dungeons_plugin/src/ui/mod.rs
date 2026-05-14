@@ -31,6 +31,7 @@ impl Plugin for GameUIPlugin {
         app.add_plugins(MainMenuPlugin)
             .add_plugins(GameOverMenuPlugin)
             .add_plugins(PauseMenuPlugin)
+            .add_plugins(NextLevelPlugin)
             .add_plugins(HudPlugin);
     }
 }

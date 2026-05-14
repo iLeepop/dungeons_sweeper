@@ -19,7 +19,7 @@ use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
 use crate::resources::tile::Tile;
 use crate::resources::tile_map::enemy_neighbor_display_label;
-use crate::resources::{PendingBoardRebuild, PlayerOptions};
+use crate::resources::PlayerOptions;
 
 pub fn taggle_consumer(
     event: On<ToggleEvent>,
@@ -27,7 +27,6 @@ pub fn taggle_consumer(
     mut board: ResMut<Board>,
     board_option: Res<BoardOption>,
     player_options: Res<PlayerOptions>,
-    mut pending_board: ResMut<PendingBoardRebuild>,
     mut next_state: ResMut<NextState<AppState>>,
     mut effect_counters: ResMut<EffectCounters>,
     mut effect_phase_writer: MessageWriter<EffectPhaseMessage>,
@@ -96,12 +95,10 @@ pub fn taggle_consumer(
     }
 
     // ---------------------------------------------------------------------------
-    // 出口：升关、刷新 BoardOption 计数，帧末重建棋盘并暂停（见 [`crate::flush_pending_board_rebuild`]）
+    // 出口：进入下一关菜单（升关与重建棋盘在用户点 Continue 时执行，见 [`crate::advance_stage_and_rebuild_board`]）。
     // ---------------------------------------------------------------------------
     if out_way.is_some() {
-        // 升关与 `BoardOption` 刷新在帧末 [`crate::flush_pending_board_rebuild`]，减轻 Observer 参数数量。
-        pending_board.0 = true;
-        next_state.set(AppState::GamePause);
+        next_state.set(AppState::NextLevel);
         return;
     }
 

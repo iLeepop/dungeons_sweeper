@@ -14,6 +14,33 @@ pub struct TileKindCounts {
 /// 出生点固定占用 1 格，与 `TileMap::set_additem` 校验一致。
 pub const SPAWN_RESERVED: u32 = 1;
 
+/// 关卡对应的正方形棋盘边长（宽=高），**阶梯式增长**：前期关卡密、后期放缓并封顶。
+///
+/// - 与 [`apply_stage_to_board_option`] 同步使用，保证 `TileMap` 面积随 `StageConfig.stage` 扩大。
+/// - 计数类公式仍用 [`counts_for_stage`]，其 `area = side * side` 会随本边长自动缩放。
+pub fn map_side_for_stage(stage: u32) -> u32 {
+    let s = stage.max(1);
+    match s {
+        1 => 5,
+        2..=3 => 6,
+        4..=5 => 7,
+        6..=7 => 8,
+        8..=10 => 9,
+        11..=13 => 10,
+        14..=17 => 11,
+        18..=22 => 12,
+        // 之后每 4 关 +1 边长，上限 15，避免单局过大。
+        _ => (12 + (s.saturating_sub(18)) / 4).min(15),
+    }
+}
+
+/// 关卡对应的地图尺寸（当前策略为正方形）。
+#[inline]
+pub fn map_size_for_stage(stage: u32) -> (u32, u32) {
+    let n = map_side_for_stage(stage);
+    (n, n)
+}
+
 pub fn difficulty_factor_for_stage(stage: u32) -> f32 {
     let s = stage.max(1) as f32;
     1.0 + 0.18 * (s - 1.0).max(0.0)
@@ -103,8 +130,9 @@ pub fn counts_for_stage(area: u32, stage: u32) -> TileKindCounts {
     c
 }
 
-/// 按阶段写入 `BoardOption` 的四类数量与 `difficulty_factor`。
+/// 按阶段写入 `BoardOption`：**地图边长（阶梯）**、四类数量与 `difficulty_factor`。
 pub fn apply_stage_to_board_option(board: &mut BoardOption, stage: u32) {
+    board.map_size = map_size_for_stage(stage);
     let (w, h) = board.map_size;
     let area = w.saturating_mul(h);
     let c = counts_for_stage(area, stage);
@@ -118,6 +146,15 @@ pub fn apply_stage_to_board_option(board: &mut BoardOption, stage: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn map_grows_with_stage() {
+        assert!(map_side_for_stage(1) < map_side_for_stage(8));
+        assert!(map_side_for_stage(8) <= map_side_for_stage(30));
+        assert_eq!(map_side_for_stage(1), 5);
+        assert_eq!(map_side_for_stage(20), 12);
+        assert_eq!(map_side_for_stage(100), 15);
+    }
 
     #[test]
     fn capacity_holds_for_small_board() {

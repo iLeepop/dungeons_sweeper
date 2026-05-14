@@ -18,22 +18,43 @@ impl Plugin for HudPlugin {
             OnTransition {
                 exited: AppState::PreGame,
                 entered: AppState::InGame,
-            }, 
-            spawn_hud
+            },
+            spawn_hud,
         )
-            .add_systems(
-                OnTransition {
-                    exited: AppState::GamePause,
-                    entered: AppState::MainMenu,
-                },
-                despawn_hud,
-            )
-            .add_systems(
-                OnTransition {
-                    exited: AppState::GamePause,
-                    entered: AppState::PreGame,
-                },
-                despawn_hud,
-            );
+        .add_systems(
+            OnTransition {
+                exited: AppState::InGame,
+                entered: AppState::GameOver,
+            },
+            despawn_hud,
+        )
+        .add_systems(
+            OnTransition {
+                exited: AppState::InGame,
+                entered: AppState::NextLevel,
+            },
+            despawn_hud,
+        )
+        .add_systems(
+            OnTransition {
+                exited: AppState::NextLevel,
+                entered: AppState::InGame,
+            },
+            spawn_hud,
+        )
+        .add_systems(
+            OnTransition {
+                exited: AppState::GamePause,
+                entered: AppState::MainMenu,
+            },
+            despawn_hud,
+        )
+        .add_systems(
+            OnTransition {
+                exited: AppState::GamePause,
+                entered: AppState::PreGame,
+            },
+            despawn_hud,
+        );
     }
 }

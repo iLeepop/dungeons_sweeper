@@ -30,7 +30,7 @@ pub fn safe_bundle(
         },
         coord,
         Safe,
-        TriggerRemaining::new(3),
+        TriggerRemaining::new(1),
         children![],
     );
 }

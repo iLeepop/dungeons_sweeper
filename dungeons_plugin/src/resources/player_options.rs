@@ -29,9 +29,9 @@ impl Default for PlayerOptions {
     fn default() -> Self {
         Self {
             max_hp: 100,
-            starting_hp: 100,
-            starting_damage: 5,
-            starting_defense: 5,
+            starting_hp: 10,
+            starting_damage: 3,
+            starting_defense: 0,
             grass_heal_per_trigger: 1,
             safe_heal_per_trigger: 10,
             treasure_damage_bonus: 1,
