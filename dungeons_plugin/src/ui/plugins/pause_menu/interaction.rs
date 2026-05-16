@@ -1,6 +1,14 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
 use crate::AppState;
+use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
+use crate::resources::board::Board;
+use crate::resources::board_option::BoardOption;
+use crate::resources::StageConfig;
+use crate::resources::View2d;
+use crate::save::{
+    delete_run_save, save_run_before_board_teardown, RunSaveAvailable, SavePaths,
+};
 use crate::ui::plugins::pause_menu::components::{QuitMainMenuButton, RestartButton, ResumeButton};
 
 pub fn interact_with_restart_button(
@@ -9,6 +17,8 @@ pub fn interact_with_restart_button(
         (Changed<Interaction>, With<RestartButton>),
     >,
     mut next_state: ResMut<NextState<AppState>>,
+    paths: Res<SavePaths>,
+    mut run_available: ResMut<RunSaveAvailable>,
 ) {
     let (interaction, mut background_color) = match restart_button.single_mut() {
         Ok(v) => v,
@@ -18,6 +28,7 @@ pub fn interact_with_restart_button(
     match interaction {
         Interaction::Pressed => {
             background_color.0 = tailwind::SLATE_700.into();
+            delete_run_save(paths.as_ref(), &mut run_available);
             next_state.set(AppState::PreGame);
         }
         Interaction::Hovered => {
@@ -61,6 +72,14 @@ pub fn interact_with_quit_main_menu_button(
         (Changed<Interaction>, With<QuitMainMenuButton>),
     >,
     mut next_state: ResMut<NextState<AppState>>,
+    board: Res<Board>,
+    board_options: Res<BoardOption>,
+    stage: Res<StageConfig>,
+    enemy_health: Query<&Health, With<Enemy>>,
+    player: Single<(&Health, &Damage, &Defense, &GoldCoin, &Gem), With<Player>>,
+    paths: Res<SavePaths>,
+    mut run_available: ResMut<RunSaveAvailable>,
+    view2d: Res<View2d>,
 ) {
     let (interaction, mut background_color) = match quit_main_menu_button.single_mut() {
         Ok(v) => v,
@@ -70,6 +89,23 @@ pub fn interact_with_quit_main_menu_button(
     match interaction {
         Interaction::Pressed => {
             background_color.0 = tailwind::SLATE_700.into();
+            save_run_before_board_teardown(
+                paths.as_ref(),
+                &mut run_available,
+                stage.as_ref(),
+                board.as_ref(),
+                board_options.as_ref(),
+                &enemy_health,
+                (
+                    &player.0,
+                    &player.1,
+                    &player.2,
+                    &player.3,
+                    &player.4,
+                ),
+                view2d.as_ref(),
+                AppState::GamePause,
+            );
             next_state.set(AppState::MainMenu);
         }
         Interaction::Hovered => {

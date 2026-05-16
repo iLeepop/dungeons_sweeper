@@ -1,8 +1,12 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
 use crate::AppState;
+use crate::components::Player;
 use crate::resources::StageConfig;
-use crate::ui::plugins::main_menu::components::{QuitButton, StartGameButton};
+use crate::save::{delete_run_save, load_run_save, PendingRunRestore, RunSaveAvailable, SavePaths};
+use crate::ui::plugins::main_menu::components::{
+    ContinueRunButton, QuitButton, StartGameButton,
+};
 
 pub fn interact_with_start_game_button(
     mut start_button: Query<
@@ -11,6 +15,11 @@ pub fn interact_with_start_game_button(
     >,
     mut next_state: ResMut<NextState<AppState>>,
     mut stage: ResMut<StageConfig>,
+    paths: Res<SavePaths>,
+    mut run_available: ResMut<RunSaveAvailable>,
+    mut pending: ResMut<PendingRunRestore>,
+    mut commands: Commands,
+    players: Query<Entity, With<Player>>,
 ) {
     let (interaction, mut background_color) = match start_button.single_mut() {
         Ok(v) => v,
@@ -20,8 +29,49 @@ pub fn interact_with_start_game_button(
     match interaction {
         Interaction::Pressed => {
             background_color.0 = tailwind::SLATE_700.into();
+            pending.0 = None;
+            delete_run_save(paths.as_ref(), &mut run_available);
+            for entity in players.iter() {
+                commands.entity(entity).despawn();
+            }
             stage.reset_to_first_stage();
             next_state.set(AppState::PreGame);
+        }
+        Interaction::Hovered => {
+            background_color.0 = tailwind::SLATE_600.into();
+        }
+        Interaction::None => {
+            background_color.0 = tailwind::SLATE_500.into();
+        }
+    }
+}
+
+pub fn interact_with_continue_run_button(
+    mut continue_button: Query<
+        (&Interaction, &mut BackgroundColor),
+        (Changed<Interaction>, With<ContinueRunButton>),
+    >,
+    mut next_state: ResMut<NextState<AppState>>,
+    paths: Res<SavePaths>,
+    mut pending: ResMut<PendingRunRestore>,
+    run_available: Res<RunSaveAvailable>,
+) {
+    if !run_available.0 {
+        return;
+    }
+
+    let (interaction, mut background_color) = match continue_button.single_mut() {
+        Ok(v) => v,
+        Err(_) => return,
+    };
+
+    match interaction {
+        Interaction::Pressed => {
+            background_color.0 = tailwind::SLATE_700.into();
+            if let Some(save) = load_run_save(paths.as_ref()) {
+                pending.0 = Some(save);
+                next_state.set(AppState::PreGame);
+            }
         }
         Interaction::Hovered => {
             background_color.0 = tailwind::SLATE_600.into();

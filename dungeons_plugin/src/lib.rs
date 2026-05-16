@@ -4,6 +4,7 @@ pub mod effects;
 mod events;
 mod observers;
 pub mod resources;
+mod save;
 mod systems;
 pub mod ui;
 mod utils;
@@ -14,9 +15,14 @@ use bevy::prelude::*;
 
 use crate::bundles::{
     cover, enemy_bundle, enemy_neighbor_bundle, GrassTile, item_bundle, out_way_bundle,
-    player_bundle, safe_bundle, spawn_bundle,
+    player_bundle, player_bundle_from_snapshot, safe_bundle, spawn_bundle,
 };
-use crate::components::{Coordinates, Player, View};
+use crate::components::{Coordinates, Damage, Defense, Enemy, Gem, GoldCoin, Health, Player, View};
+use crate::save::{
+    apply_board_option_from_snapshot, apply_board_restoration, apply_player_snapshot,
+    app_state_from_pause_kind, delete_run_save, restore_view, tile_map_from_snapshot,
+    PendingRunRestore, RunSave, SavePlugin,
+};
 use crate::effects::effect_phase_dispatch_system;
 use crate::effects::EffectPhaseMessage;
 use crate::effects::EffectCounters;
@@ -58,18 +64,11 @@ pub enum AppState {
 // 棋盘实体与 TileMap：PreGame / 出口共用，先清理 WorldEffectHost 与旧 Board 再生成。
 // ---------------------------------------------------------------------------
 
-pub(crate) fn rebuild_board_entities(
+fn cleanup_board_hosts(
     commands: &mut Commands,
-    board_options: &BoardOption,
-    enemy_assets: &EnemyAssets,
-    player_options: &PlayerOptions,
-    tuning: &DifficultyTuning,
-    stage: u32,
     world_hosts: &Query<Entity, With<WorldEffectHost>>,
     board_entity_to_despawn: Option<Entity>,
-    grass_heal: i8,
 ) {
-    // 避免重复宿主与重复棋盘实体占用同一逻辑。
     for host_ent in world_hosts.iter() {
         commands.entity(host_ent).despawn();
     }
@@ -77,25 +76,15 @@ pub(crate) fn rebuild_board_entities(
         commands.entity(be).despawn();
     }
     commands.remove_resource::<Board>();
+}
 
-    commands.spawn((
-        Name::new("WorldEffectHost"),
-        WorldEffectHost,
-        WorldEffectLoader::default(),
-    ));
-
-    let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
-    tile_map.set_additem(
-        board_options.safe_count,
-        board_options.out_way_count,
-        board_options.monster_count,
-        board_options.treasure_count,
-        board_options.difficulty_factor,
-        stage,
-        player_options,
-        tuning,
-    );
-
+fn spawn_board_from_tile_map(
+    commands: &mut Commands,
+    tile_map: TileMap,
+    board_options: &BoardOption,
+    enemy_assets: &EnemyAssets,
+    grass_heal: i8,
+) -> Board {
     #[cfg(feature = "debug")]
     println!("{}", tile_map.console_output());
 
@@ -143,7 +132,7 @@ pub(crate) fn rebuild_board_entities(
         })
         .id();
 
-    commands.insert_resource(Board {
+    Board {
         tile_map,
         tile_size,
         bounds: Bounds2 {
@@ -153,7 +142,107 @@ pub(crate) fn rebuild_board_entities(
         tiles,
         covers,
         board_entity: Some(board_entity),
-    });
+    }
+}
+
+fn insert_board_from_tile_map(
+    commands: &mut Commands,
+    tile_map: TileMap,
+    board_options: &BoardOption,
+    enemy_assets: &EnemyAssets,
+    grass_heal: i8,
+) {
+    let board = spawn_board_from_tile_map(commands, tile_map, board_options, enemy_assets, grass_heal);
+    commands.insert_resource(board);
+}
+
+pub(crate) fn rebuild_board_procedural(
+    commands: &mut Commands,
+    board_options: &BoardOption,
+    enemy_assets: &EnemyAssets,
+    player_options: &PlayerOptions,
+    tuning: &DifficultyTuning,
+    stage: u32,
+    world_hosts: &Query<Entity, With<WorldEffectHost>>,
+    board_entity_to_despawn: Option<Entity>,
+    grass_heal: i8,
+) {
+    cleanup_board_hosts(commands, world_hosts, board_entity_to_despawn);
+
+    commands.spawn((
+        Name::new("WorldEffectHost"),
+        WorldEffectHost,
+        WorldEffectLoader::default(),
+    ));
+
+    let mut tile_map = TileMap::new(board_options.map_size.0, board_options.map_size.1);
+    tile_map.set_additem(
+        board_options.safe_count,
+        board_options.out_way_count,
+        board_options.monster_count,
+        board_options.treasure_count,
+        board_options.difficulty_factor,
+        stage,
+        player_options,
+        tuning,
+    );
+
+    insert_board_from_tile_map(commands, tile_map, board_options, enemy_assets, grass_heal);
+}
+
+pub(crate) fn rebuild_board_from_snapshot(
+    commands: &mut Commands,
+    save: &RunSave,
+    board_options: &BoardOption,
+    enemy_assets: &EnemyAssets,
+    world_hosts: &Query<Entity, With<WorldEffectHost>>,
+    board_entity_to_despawn: Option<Entity>,
+    grass_heal: i8,
+    enemy_health: &mut Query<&mut Health, With<Enemy>>,
+) {
+    cleanup_board_hosts(commands, world_hosts, board_entity_to_despawn);
+
+    commands.spawn((
+        Name::new("WorldEffectHost"),
+        WorldEffectHost,
+        WorldEffectLoader::default(),
+    ));
+
+    let tile_map = tile_map_from_snapshot(&save.board);
+    let mut board = spawn_board_from_tile_map(
+        commands,
+        tile_map,
+        board_options,
+        enemy_assets,
+        grass_heal,
+    );
+    apply_board_restoration(commands, &mut board, &save.board, &mut *enemy_health);
+    commands.insert_resource(board);
+}
+
+/// 程序化生成棋盘（新游戏 / 升关）。
+pub(crate) fn rebuild_board_entities(
+    commands: &mut Commands,
+    board_options: &BoardOption,
+    enemy_assets: &EnemyAssets,
+    player_options: &PlayerOptions,
+    tuning: &DifficultyTuning,
+    stage: u32,
+    world_hosts: &Query<Entity, With<WorldEffectHost>>,
+    board_entity_to_despawn: Option<Entity>,
+    grass_heal: i8,
+) {
+    rebuild_board_procedural(
+        commands,
+        board_options,
+        enemy_assets,
+        player_options,
+        tuning,
+        stage,
+        world_hosts,
+        board_entity_to_despawn,
+        grass_heal,
+    );
 }
 
 /// 进入下一关：升 `StageConfig`、刷新 [`BoardOption`] 计数、重建棋盘（由下一关菜单 Continue 调用）。
@@ -198,7 +287,7 @@ impl Plugin for DungeonsPlugin {
             ).chain()
         );
 
-        app.add_plugins(GameUIPlugin);
+        app.add_plugins((SavePlugin, GameUIPlugin));
 
         app.add_message::<EffectPhaseMessage>()
             .init_resource::<EffectCounters>()
@@ -219,7 +308,7 @@ impl Plugin for DungeonsPlugin {
             .add_systems(
                 OnEnter(AppState::PreGame),
                 (
-                    apply_stage_board_options,
+                    prepare_pregame,
                     Self::setup_player,
                     Self::create_board,
                 )
@@ -262,8 +351,35 @@ impl DungeonsPlugin {
         });
     }
 
-    /// 单例玩家：重进 PreGame 时不重复生成（与全局 `Single<Player>` 查询一致）。
-    pub fn setup_player(mut commands: Commands, opts: Res<PlayerOptions>, q: Query<Entity, With<Player>>) {
+    /// 单例玩家：读档时更新组件；否则仅在不存在时生成。
+    pub fn setup_player(
+        mut commands: Commands,
+        opts: Res<PlayerOptions>,
+        q: Query<Entity, With<Player>>,
+        pending: Res<PendingRunRestore>,
+        mut player_stats: Query<
+            (&mut Health, &mut Damage, &mut Defense, &mut GoldCoin, &mut Gem),
+            With<Player>,
+        >,
+    ) {
+        if let Some(save) = pending.0.as_ref() {
+            if let Ok(e) = q.single() {
+                if let Ok(mut stats) = player_stats.get_mut(e) {
+                    apply_player_snapshot(
+                        &mut stats.0,
+                        &mut stats.1,
+                        &mut stats.2,
+                        &mut stats.3,
+                        &mut stats.4,
+                        &save.player,
+                    );
+                }
+            } else {
+                commands.spawn(player_bundle_from_snapshot(opts.as_ref(), &save.player));
+            }
+            return;
+        }
+
         if q.is_empty() {
             commands.spawn(player_bundle(opts.as_ref()));
         }
@@ -277,23 +393,47 @@ impl DungeonsPlugin {
         tuning: Res<DifficultyTuning>,
         stage: Res<StageConfig>,
         existing_board: Option<Res<Board>>,
+        mut pending: ResMut<PendingRunRestore>,
         mut next_state: ResMut<NextState<AppState>>,
         world_hosts: Query<Entity, With<WorldEffectHost>>,
+        mut enemy_health: Query<&mut Health, With<Enemy>>,
+        mut view2d: ResMut<View2d>,
+        view: Single<&mut Transform, With<View>>,
     ) {
         let board_ent = existing_board.as_ref().and_then(|b| b.board_entity);
-        rebuild_board_entities(
-            &mut commands,
-            board_options.as_ref(),
-            enemy_assets.as_ref(),
-            player_options.as_ref(),
-            tuning.as_ref(),
-            stage.stage,
-            &world_hosts,
-            board_ent,
-            player_options.grass_heal_per_trigger,
-        );
+        let grass_heal = player_options.grass_heal_per_trigger;
 
-        next_state.set(AppState::InGame);
+        let resume_state = if let Some(save) = pending.0.take() {
+            rebuild_board_from_snapshot(
+                &mut commands,
+                &save,
+                board_options.as_ref(),
+                enemy_assets.as_ref(),
+                &world_hosts,
+                board_ent,
+                grass_heal,
+                &mut enemy_health,
+            );
+            if let Some(v) = save.view {
+                restore_view(&mut view2d, &mut view.into_inner(), Vec3::from_array(v));
+            }
+            Some(app_state_from_pause_kind(save.paused_at))
+        } else {
+            rebuild_board_procedural(
+                &mut commands,
+                board_options.as_ref(),
+                enemy_assets.as_ref(),
+                player_options.as_ref(),
+                tuning.as_ref(),
+                stage.stage,
+                &world_hosts,
+                board_ent,
+                grass_heal,
+            );
+            None
+        };
+
+        next_state.set(resume_state.unwrap_or(AppState::InGame));
     }
 
     fn spawn_tiles(
@@ -437,6 +577,19 @@ fn setup_game(mut next_state: ResMut<NextState<AppState>>) {
 
 fn apply_stage_board_options(mut board: ResMut<BoardOption>, stage: Res<StageConfig>) {
     apply_stage_to_board_option(&mut board, stage.stage);
+}
+
+fn prepare_pregame(
+    mut stage: ResMut<StageConfig>,
+    mut board: ResMut<BoardOption>,
+    pending: Res<PendingRunRestore>,
+) {
+    if let Some(save) = pending.0.as_ref() {
+        stage.stage = save.stage;
+        apply_board_option_from_snapshot(&mut board, &save.board);
+    } else {
+        apply_stage_to_board_option(&mut board, stage.stage);
+    }
 }
 
 fn setup_board_options(

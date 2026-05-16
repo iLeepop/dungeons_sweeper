@@ -2,9 +2,11 @@ use bevy::{color::palettes::tailwind, prelude::*};
 
 use crate::AppState;
 use crate::components::Player;
+use crate::save::{delete_run_save, RunSaveAvailable, SavePaths};
 use crate::components::view::View;
 use crate::resources::View2d;
 use crate::resources::board::Board;
+use crate::resources::StageConfig;
 use crate::ui::plugins::game_over_menu::components::{
     GameOverQuitMainMenuButton, GameOverRestartButton,
 };
@@ -16,8 +18,11 @@ pub fn interact_with_game_over_restart(
     >,
     mut commands: Commands,
     mut next_state: ResMut<NextState<AppState>>,
+    mut stage: ResMut<StageConfig>,
     board: Res<Board>,
     player: Single<Entity, With<Player>>,
+    paths: Res<SavePaths>,
+    mut run_available: ResMut<RunSaveAvailable>,
 ) {
     let (interaction, mut bg) = match btn.single_mut() {
         Ok(v) => v,
@@ -26,6 +31,9 @@ pub fn interact_with_game_over_restart(
     match interaction {
         Interaction::Pressed => {
             bg.0 = tailwind::SLATE_700.into();
+            delete_run_save(paths.as_ref(), &mut run_available);
+            // 与主菜单「开始游戏」一致：整局重来须回到第 1 关（地图尺寸与难度系数）。
+            stage.reset_to_first_stage();
             if board.board_entity.is_some() {
                 commands.entity(board.board_entity.unwrap()).despawn();
             }

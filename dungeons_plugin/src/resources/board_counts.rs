@@ -30,7 +30,7 @@ pub fn map_side_for_stage(stage: u32) -> u32 {
         14..=17 => 11,
         18..=22 => 12,
         // 之后每 4 关 +1 边长，上限 15，避免单局过大。
-        _ => (12 + (s.saturating_sub(18)) / 4).min(15),
+        _ => (12 + (s.saturating_sub(18)) / 4).min(30),
     }
 }
 

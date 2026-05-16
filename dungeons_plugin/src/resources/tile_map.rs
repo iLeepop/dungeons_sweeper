@@ -65,6 +65,40 @@ impl TileMap {
         }
     }
 
+    /// 从存档网格恢复（不调用 `set_additem`）。
+    pub fn from_saved_grid(
+        width: u32,
+        height: u32,
+        difficulty_factor: f32,
+        tiles: Vec<Vec<Tile>>,
+    ) -> Self {
+        let mut safe_count = 0u16;
+        let mut out_way_count = 0u16;
+        let mut enemy_count = 0u16;
+        let mut treasure_count = 0u16;
+        for row in &tiles {
+            for tile in row {
+                match tile {
+                    Tile::Safe => safe_count += 1,
+                    Tile::OutWay => out_way_count += 1,
+                    Tile::Enemy(_) => enemy_count += 1,
+                    Tile::Treasure => treasure_count += 1,
+                    _ => {}
+                }
+            }
+        }
+        TileMap {
+            safe_count,
+            out_way_count,
+            enemy_count,
+            treasure_count,
+            difficulty_factor,
+            width,
+            height,
+            tiles,
+        }
+    }
+
     #[cfg(feature = "debug")]
     pub fn console_output(&self) -> String {
         let mut buffer = format!(

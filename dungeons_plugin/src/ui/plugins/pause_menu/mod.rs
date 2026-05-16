@@ -9,6 +9,7 @@ use crate::components::Player;
 use crate::components::view::View;
 use crate::resources::View2d;
 use crate::resources::board::Board;
+use crate::resources::StageConfig;
 use crate::ui::plugins::pause_menu::interaction::{
     interact_with_quit_main_menu_button, interact_with_restart_button, interact_with_resume_button,
 };
@@ -68,9 +69,11 @@ impl PauseMenuPlugin {
     fn restart_game(
         mut commands: Commands,
         mut next_state: ResMut<NextState<AppState>>,
+        mut stage: ResMut<StageConfig>,
         board: Res<Board>,
         player: Single<Entity, With<Player>>,
     ) {
+        stage.reset_to_first_stage();
         if board.board_entity.is_some() {
             commands.entity(board.board_entity.unwrap()).despawn();
         }

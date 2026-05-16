@@ -25,12 +25,12 @@ impl GrassTile {
         grass_heal: i8,
     ) -> impl Bundle {
         // --- 地块效果：在「玩家触发该格」阶段为玩家加血（具体调度见 `effect_phase_dispatch_system`） ---
-        let mut tile_effects = TileEffectLoader::default();
-        tile_effects.push(EffectEntry::new(
-            0,
-            EffectTrigger::OnPhase(EffectPhase::AfterPlayerTileTrigger),
-            GrassHealPlayer(grass_heal),
-        ));
+        // let mut tile_effects = TileEffectLoader::default();
+        // tile_effects.push(EffectEntry::new(
+        //     0,
+        //     EffectTrigger::OnPhase(EffectPhase::AfterPlayerTileTrigger),
+        //     GrassHealPlayer(grass_heal),
+        // ));
 
         (
             Name::new(format!("Tile_{}", coord)),
@@ -52,7 +52,7 @@ impl GrassTile {
             coord,
             Grass,
             TriggerRemaining::default(),
-            tile_effects,
+            // tile_effects,
             children![],
         )
     }
