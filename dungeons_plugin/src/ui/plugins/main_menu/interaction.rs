@@ -1,5 +1,11 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
+use crate::character::{
+    effects_from_character, persist_character_selection, PendingNewRunSetup, SelectedCharacter,
+    UnlockedCharacters,
+};
+use crate::components::Gem;
+use crate::save::GlobalProfile;
 use crate::AppState;
 use crate::components::Player;
 use crate::resources::StageConfig;
@@ -18,9 +24,17 @@ pub fn interact_with_start_game_button(
     paths: Res<SavePaths>,
     mut run_available: ResMut<RunSaveAvailable>,
     mut pending: ResMut<PendingRunRestore>,
+    mut new_run: ResMut<PendingNewRunSetup>,
+    selected: Res<SelectedCharacter>,
+    unlocked: Res<UnlockedCharacters>,
+    global_gem: Single<&Gem, With<GlobalProfile>>,
     mut commands: Commands,
     players: Query<Entity, With<Player>>,
 ) {
+    if !unlocked.is_unlocked(selected.id) {
+        return;
+    }
+
     let (interaction, mut background_color) = match start_button.single_mut() {
         Ok(v) => v,
         Err(_) => return,
@@ -29,6 +43,15 @@ pub fn interact_with_start_game_button(
     match interaction {
         Interaction::Pressed => {
             background_color.0 = tailwind::SLATE_700.into();
+            persist_character_selection(
+                paths.as_ref(),
+                global_gem.0,
+                unlocked.as_ref(),
+                selected.id,
+            );
+            let specs = effects_from_character(selected.id);
+            new_run.character_id = Some(selected.id);
+            new_run.effect_specs = specs;
             pending.0 = None;
             delete_run_save(paths.as_ref(), &mut run_available);
             for entity in players.iter() {
@@ -55,8 +78,10 @@ pub fn interact_with_continue_run_button(
     paths: Res<SavePaths>,
     mut pending: ResMut<PendingRunRestore>,
     run_available: Res<RunSaveAvailable>,
+    selected: Res<SelectedCharacter>,
+    unlocked: Res<UnlockedCharacters>,
 ) {
-    if !run_available.0 {
+    if !run_available.0 || !unlocked.is_unlocked(selected.id) {
         return;
     }
 

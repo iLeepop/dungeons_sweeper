@@ -3,7 +3,9 @@ use bevy::{color::palettes::tailwind, prelude::*};
 use crate::advance_stage_and_rebuild_board;
 use crate::AppState;
 use crate::components::view::View;
+use crate::character::{RunCharacter, SelectedCharacter, UnlockedCharacters};
 use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
+use crate::effects::{grass_heal_amount_from_specs, ActiveEffectSpecs};
 use crate::effects::WorldEffectHost;
 use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
@@ -37,6 +39,9 @@ pub fn interact_with_next_level_continue(
     paths: Res<SavePaths>,
     mut global_gem: Single<&mut Gem, With<GlobalProfile>>,
     mut player_gem: Single<&mut Gem, (With<Player>, Without<GlobalProfile>)>,
+    unlocked: Res<UnlockedCharacters>,
+    selected: Res<SelectedCharacter>,
+    active_effects: Single<&ActiveEffectSpecs, With<Player>>,
 ) {
     let (interaction, mut bg) = match btn.single_mut() {
         Ok(v) => v,
@@ -47,7 +52,14 @@ pub fn interact_with_next_level_continue(
             bg.0 = tailwind::EMERALD_800.into();
             let run_gems = player_gem.0;
             player_gem.0 = 0;
-            merge_run_gems_into_global(paths.as_ref(), &mut global_gem, run_gems);
+            merge_run_gems_into_global(
+                paths.as_ref(),
+                &mut global_gem,
+                run_gems,
+                unlocked.as_ref(),
+                selected.id,
+            );
+            let grass_heal = grass_heal_amount_from_specs(&active_effects.0).unwrap_or(0);
             let board_ent = board.board_entity;
             advance_stage_and_rebuild_board(
                 &mut commands,
@@ -58,6 +70,7 @@ pub fn interact_with_next_level_continue(
                 tuning.as_ref(),
                 &world_hosts,
                 board_ent,
+                grass_heal,
             );
             next_state.set(AppState::InGame);
         }
@@ -81,7 +94,18 @@ pub fn interact_with_next_level_quit_main_menu(
     board_options: Res<BoardOption>,
     stage: Res<StageConfig>,
     enemy_health: Query<&Health, With<Enemy>>,
-    player: Single<(&Health, &Damage, &Defense, &GoldCoin, &Gem), With<Player>>,
+    player: Single<
+        (
+            &Health,
+            &Damage,
+            &Defense,
+            &GoldCoin,
+            &Gem,
+            &RunCharacter,
+            &ActiveEffectSpecs,
+        ),
+        With<Player>,
+    >,
     paths: Res<SavePaths>,
     mut run_available: ResMut<RunSaveAvailable>,
     mut view2d: ResMut<View2d>,
@@ -108,6 +132,8 @@ pub fn interact_with_next_level_quit_main_menu(
                     &player.3,
                     &player.4,
                 ),
+                &player.5,
+                &player.6,
                 view2d.as_ref(),
                 AppState::NextLevel,
             );

@@ -2,6 +2,7 @@ use bevy::log;
 use bevy::{color::palettes::tailwind, prelude::*};
 
 use crate::components::{Gem, GoldCoin, Player};
+use crate::save::GameOverGemsEarned;
 use crate::ui::UiAssets;
 use crate::ui::{
     Ui,
@@ -15,8 +16,15 @@ pub fn spawn_game_over_menu(
     ui_assets: Res<UiAssets>,
     gold: Single<&GoldCoin, With<Player>>,
     gem: Single<&Gem, With<Player>>,
+    gems_earned: Res<GameOverGemsEarned>,
 ) {
-    let _ = build_game_over_menu(&mut commands, ui_assets.as_ref(), gold.0, gem.0);
+    let _ = build_game_over_menu(
+        &mut commands,
+        ui_assets.as_ref(),
+        gold.0,
+        gem.0,
+        gems_earned.0,
+    );
 }
 
 pub fn despawn_game_over_menu(mut commands: Commands, menu: Single<Entity, With<GameOverMenu>>) {
@@ -30,6 +38,7 @@ fn build_game_over_menu(
     ui_assets: &UiAssets,
     gold: u32,
     gems: u32,
+    global_gems_earned: u32,
 ) -> Entity {
     commands
         .spawn((
@@ -75,7 +84,10 @@ fn build_game_over_menu(
                             Transform::from_xyz(0., 0., 1.)
                         ),
                         (
-                            Text::new(format!("金币: {}\n宝石: {}", gold, gems)),
+                            Text::new(format!(
+                                "金币: {}\n局内宝石: {}\n获得宝石: +{}",
+                                gold, gems, global_gems_earned
+                            )),
                             TextFont {
                                 font_size: 22.0,
                                 font: ui_assets.font.clone(),

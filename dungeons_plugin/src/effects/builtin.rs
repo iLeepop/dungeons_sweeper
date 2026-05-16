@@ -1,7 +1,8 @@
 //! 少量内置效果示例，便于在 Bundle 中演示加载器用法。
 
+use crate::components::Damage;
 use crate::effects::behavior::EffectBehavior;
-use crate::effects::context::TileEffectContext;
+use crate::effects::context::{PlayerEffectContext, TileEffectContext};
 
 // ---------------------------------------------------------------------------
 // 草地：触发后为玩家回复生命（上限由调度器写入 [`TileEffectContext::player_hp_cap`]）
@@ -24,6 +25,21 @@ impl EffectBehavior for GrassHealPlayer {
                     .clamp(i8::MIN as i32, cap.min(i8::MAX as i32)) as i8;
             }
             None => {}
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// 击杀敌方：永久增加攻击力
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, Copy)]
+pub struct KillBonusDamage(pub u8);
+
+impl EffectBehavior for KillBonusDamage {
+    fn apply_on_player(&self, ctx: &mut PlayerEffectContext<'_, '_, '_>) {
+        if let Some(dmg) = &mut ctx.player_damage {
+            dmg.0 = dmg.0.saturating_add(self.0);
         }
     }
 }

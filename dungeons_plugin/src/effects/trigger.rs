@@ -25,6 +25,8 @@ pub enum EffectPhase {
     AfterEnemyAttack,
     /// 玩家视角移动成功（未撞边界）之后。
     AfterViewMove,
+    /// 玩家击杀敌方单位并完成地块替换之后。
+    AfterEnemyKill,
 }
 
 // ---------------------------------------------------------------------------

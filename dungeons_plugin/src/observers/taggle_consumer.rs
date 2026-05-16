@@ -192,6 +192,12 @@ pub fn taggle_consumer(
                     if let Ok((_, _, mut gold)) = health_queries.p2().get_mut(*player_entity) {
                         gold.0 = gold.0.saturating_add(1);
                     }
+
+                    effect_phase_writer.write(EffectPhaseMessage {
+                        phase: EffectPhase::AfterEnemyKill,
+                        coord: Some(coord),
+                        tile: Some(tile_ent),
+                    });
                 } else {
                     log::error!("board_entity missing, cannot spawn replacement tile");
                     board.tiles.remove(&coord);

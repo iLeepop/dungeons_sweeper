@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::character::RunCharacter;
 use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
+use crate::effects::ActiveEffectSpecs;
 use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
 use crate::resources::StageConfig;
@@ -13,7 +15,7 @@ use crate::save::snapshot::{
 use crate::save::snapshot::RunPauseKind;
 use crate::AppState;
 
-pub const RUN_SAVE_VERSION: u32 = 1;
+pub const RUN_SAVE_VERSION: u32 = 2;
 
 #[derive(Resource, Default)]
 pub struct PendingRunRestore(pub Option<RunSave>);
@@ -75,11 +77,21 @@ pub fn capture_run_save(
         &GoldCoin,
         &Gem,
     ),
+    run_character: &RunCharacter,
+    active_effects: &ActiveEffectSpecs,
     view2d: &View2d,
     exited_state: &AppState,
 ) {
     let board_snap = board_snapshot_from_board(board, board_options, enemy_health);
-    let player_snap = capture_player_snapshot(player.0, player.1, player.2, player.3, player.4);
+    let player_snap = capture_player_snapshot(
+        player.0,
+        player.1,
+        player.2,
+        player.3,
+        player.4,
+        run_character.0,
+        active_effects,
+    );
     let view = Some([view2d.position.x, view2d.position.y, view2d.position.z]);
     let save = RunSave {
         version: RUN_SAVE_VERSION,

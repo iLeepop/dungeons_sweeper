@@ -10,6 +10,8 @@ use crate::resources::tile::Tile;
 use crate::resources::tile_map::TileMap;
 use crate::resources::StageConfig;
 use crate::resources::view2d::View2d;
+use crate::character::CharacterId;
+use crate::effects::{capture_effect_specs, ActiveEffectSpecs, SerializableEffect};
 use crate::AppState;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -73,6 +75,10 @@ pub struct PlayerSnapshot {
     pub defense: i8,
     pub gold: u32,
     pub gems: u32,
+    #[serde(default)]
+    pub character_id: u8,
+    #[serde(default)]
+    pub effect_specs: Vec<SerializableEffect>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -217,6 +223,8 @@ pub fn capture_player_snapshot(
     defense: &Defense,
     gold: &GoldCoin,
     gems: &Gem,
+    character_id: CharacterId,
+    active_effects: &ActiveEffectSpecs,
 ) -> PlayerSnapshot {
     PlayerSnapshot {
         health: health.0,
@@ -224,7 +232,13 @@ pub fn capture_player_snapshot(
         defense: defense.0,
         gold: gold.0,
         gems: gems.0,
+        character_id: character_id.to_index(),
+        effect_specs: capture_effect_specs(active_effects),
     }
+}
+
+pub fn character_id_from_snapshot(snap: &PlayerSnapshot) -> CharacterId {
+    CharacterId::from_index(snap.character_id).unwrap_or(CharacterId::Herbalist)
 }
 
 pub fn apply_player_snapshot(

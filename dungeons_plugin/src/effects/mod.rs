@@ -9,10 +9,15 @@ mod counters;
 mod dispatch;
 mod entry;
 mod loaders;
+mod spec;
 mod trigger;
 
 pub use behavior::EffectBehavior;
-pub use builtin::{GrassHealPlayer, PLAYER_HP_MAX};
+pub use builtin::{GrassHealPlayer, KillBonusDamage, PLAYER_HP_MAX};
+pub use spec::{
+    build_player_loader, capture_effect_specs, grass_heal_amount_from_specs, ActiveEffectSpecs,
+    SerializableEffect,
+};
 pub use context::{
     EnemyTileEffectContext, PlayerEffectContext, TileEffectContext, WorldEffectContext,
 };

@@ -8,7 +8,7 @@
 
 | 存档类型 | 文件 | 内容 | 写入时机 | 读取时机 |
 |----------|------|------|----------|----------|
-| **全局存档** | `global_save.ron` | 累计宝石 `gems` | Continue 升关合并后 | 启动 |
+| **全局存档** | `global_save.ron` | 宝石、角色解锁与选中（v2） | Continue 升关合并、Game Over 奖励、解锁角色 | 启动 |
 | **局内存档** | `run_save.ron` | 关卡、棋盘逻辑、玩家状态 | 从局内返回主菜单 | 主菜单「继续」 |
 
 **不在全局合并**：局内金币 `GoldCoin` 仅用于单局 HUD/玩法。
@@ -21,20 +21,24 @@
 
 - 目录：`{data_local_dir}/dungeons_sweeper/`（`dirs` crate）
 - 格式：RON + `serde`
-- 版本字段：`version: 1`；不匹配时局存档拒绝加载并打 log
+- 版本字段：全局 `version: 2`、局内 `version: 2`；不匹配时局存档拒绝加载并打 log（全局 v1 自动迁移，见 [character-system-design.md](./character-system-design.md)）
 
 ---
 
 ## 3. 数据 Schema
 
-### 3.1 `GlobalSave`
+### 3.1 `GlobalSave`（v2）
 
 ```ron
 (
-    version: 1,
+    version: 2,
     gems: 42,
+    unlocked_characters: [0],
+    last_selected_character: 0,
 )
 ```
+
+角色字段详见 [character-system-design.md](./character-system-design.md)。v1 仅含 `gems` 时迁移为仅解锁 Herbalist。
 
 ### 3.2 `RunSave`
 
@@ -50,7 +54,7 @@
 ```
 
 - **BoardSnapshot**：`map_size`、`difficulty_factor`、各计数、`tiles` 二维网格、`uncovered` 已揭盖坐标、`enemy_hp` 仍存活敌方当前 HP
-- **PlayerSnapshot**：`health`、`damage`、`defense`、`gold`、`gems`
+- **PlayerSnapshot**：`health`、`damage`、`defense`、`gold`、`gems`、`character_id`、`effect_specs`（角色挂载效果，v2）
 
 完整网格必选：击杀后格变为 `EnemyNeighbor`、实体 despawn，无法仅靠 `stage` 种子复现。
 
@@ -115,15 +119,14 @@ Continue → `load_run_save` → `PendingRunRestore` → `PreGame` → 跳过 `a
 
 ---
 
-## 7. 宝石获取扩展点（未实现）
+## 7. 宝石获取
 
-在以下位置增加 `player_gem += n` 即可与金币对称：
+| 来源 | 写入对象 | 时机 |
+|------|----------|------|
+| **Game Over** | 全局 `Gem` | `gems_earned = stage`（见角色设计文档） |
+| **Next Level Continue** | 全局（合并局内 player gems） | 升关前 |
 
-- 宝藏格触发（`taggle_consumer` / `Treasure`）
-- 关卡奖励、成就回调
-- 调试作弊指令
-
-合并逻辑无需改动。
+局内 `player_gem` 仍可在宝藏等玩法中增加；与全局关卡奖励独立。
 
 ---
 

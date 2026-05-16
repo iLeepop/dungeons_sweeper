@@ -1,4 +1,5 @@
 mod bundles;
+mod character;
 mod components;
 pub mod effects;
 mod events;
@@ -17,11 +18,15 @@ use crate::bundles::{
     cover, enemy_bundle, enemy_neighbor_bundle, GrassTile, item_bundle, out_way_bundle,
     player_bundle, player_bundle_from_snapshot, safe_bundle, spawn_bundle,
 };
+use crate::character::{
+    effects_from_character, PendingNewRunSetup, RunCharacter, SelectedCharacter,
+};
 use crate::components::{Coordinates, Damage, Defense, Enemy, Gem, GoldCoin, Health, Player, View};
+use crate::effects::{build_player_loader, grass_heal_amount_from_specs, ActiveEffectSpecs};
 use crate::save::{
     apply_board_option_from_snapshot, apply_board_restoration, apply_player_snapshot,
-    app_state_from_pause_kind, delete_run_save, restore_view, tile_map_from_snapshot,
-    PendingRunRestore, RunSave, SavePlugin,
+    app_state_from_pause_kind, character_id_from_snapshot, delete_run_save, restore_view,
+    tile_map_from_snapshot, PendingRunRestore, RunSave, SavePlugin,
 };
 use crate::effects::effect_phase_dispatch_system;
 use crate::effects::EffectPhaseMessage;
@@ -255,6 +260,7 @@ pub fn advance_stage_and_rebuild_board(
     tuning: &DifficultyTuning,
     world_hosts: &Query<Entity, With<WorldEffectHost>>,
     board_entity_to_despawn: Option<Entity>,
+    grass_heal: i8,
 ) {
     stage.advance();
     apply_stage_to_board_option(board_options, stage.stage);
@@ -267,8 +273,14 @@ pub fn advance_stage_and_rebuild_board(
         stage.stage,
         world_hosts,
         board_entity_to_despawn,
-        player_options.grass_heal_per_trigger,
+        grass_heal,
     );
+}
+
+fn grass_heal_for_specs(effect_specs: Option<&[crate::effects::SerializableEffect]>) -> i8 {
+    effect_specs
+        .and_then(grass_heal_amount_from_specs)
+        .unwrap_or(0)
 }
 
 pub struct DungeonsPlugin {}
@@ -357,12 +369,20 @@ impl DungeonsPlugin {
         opts: Res<PlayerOptions>,
         q: Query<Entity, With<Player>>,
         pending: Res<PendingRunRestore>,
+        new_run: Res<PendingNewRunSetup>,
         mut player_stats: Query<
-            (&mut Health, &mut Damage, &mut Defense, &mut GoldCoin, &mut Gem),
+            (
+                &mut Health,
+                &mut Damage,
+                &mut Defense,
+                &mut GoldCoin,
+                &mut Gem,
+            ),
             With<Player>,
         >,
     ) {
         if let Some(save) = pending.0.as_ref() {
+            let char_id = character_id_from_snapshot(&save.player);
             if let Ok(e) = q.single() {
                 if let Ok(mut stats) = player_stats.get_mut(e) {
                     apply_player_snapshot(
@@ -374,14 +394,31 @@ impl DungeonsPlugin {
                         &save.player,
                     );
                 }
+                commands.entity(e).insert((
+                    RunCharacter(char_id),
+                    ActiveEffectSpecs(save.player.effect_specs.clone()),
+                    build_player_loader(&save.player.effect_specs),
+                ));
             } else {
-                commands.spawn(player_bundle_from_snapshot(opts.as_ref(), &save.player));
+                commands.spawn(player_bundle_from_snapshot(
+                    opts.as_ref(),
+                    &save.player,
+                    char_id,
+                ));
             }
             return;
         }
 
         if q.is_empty() {
-            commands.spawn(player_bundle(opts.as_ref()));
+            let char_id = new_run
+                .character_id
+                .unwrap_or(crate::character::CharacterId::Herbalist);
+            let specs = if new_run.effect_specs.is_empty() {
+                effects_from_character(char_id)
+            } else {
+                new_run.effect_specs.clone()
+            };
+            commands.spawn(player_bundle(opts.as_ref(), char_id, &specs));
         }
     }
 
@@ -394,6 +431,7 @@ impl DungeonsPlugin {
         stage: Res<StageConfig>,
         existing_board: Option<Res<Board>>,
         mut pending: ResMut<PendingRunRestore>,
+        new_run: Res<PendingNewRunSetup>,
         mut next_state: ResMut<NextState<AppState>>,
         world_hosts: Query<Entity, With<WorldEffectHost>>,
         mut enemy_health: Query<&mut Health, With<Enemy>>,
@@ -401,9 +439,9 @@ impl DungeonsPlugin {
         view: Single<&mut Transform, With<View>>,
     ) {
         let board_ent = existing_board.as_ref().and_then(|b| b.board_entity);
-        let grass_heal = player_options.grass_heal_per_trigger;
 
         let resume_state = if let Some(save) = pending.0.take() {
+            let grass_heal = grass_heal_for_specs(Some(&save.player.effect_specs));
             rebuild_board_from_snapshot(
                 &mut commands,
                 &save,
@@ -419,6 +457,15 @@ impl DungeonsPlugin {
             }
             Some(app_state_from_pause_kind(save.paused_at))
         } else {
+            let specs = if new_run.effect_specs.is_empty() {
+                new_run
+                    .character_id
+                    .map(effects_from_character)
+                    .unwrap_or_default()
+            } else {
+                new_run.effect_specs.clone()
+            };
+            let grass_heal = grass_heal_for_specs(Some(&specs));
             rebuild_board_procedural(
                 &mut commands,
                 board_options.as_ref(),
@@ -651,4 +698,6 @@ fn setup_board_options(
     commands.insert_resource(UiAssets {
         font: asset_server.load("fonts/vonwaon.ttf"),
     });
+
+    commands.insert_resource(PendingNewRunSetup::default());
 }

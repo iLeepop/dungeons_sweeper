@@ -1,7 +1,9 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
 use crate::AppState;
+use crate::character::RunCharacter;
 use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
+use crate::effects::ActiveEffectSpecs;
 use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
 use crate::resources::StageConfig;
@@ -76,7 +78,18 @@ pub fn interact_with_quit_main_menu_button(
     board_options: Res<BoardOption>,
     stage: Res<StageConfig>,
     enemy_health: Query<&Health, With<Enemy>>,
-    player: Single<(&Health, &Damage, &Defense, &GoldCoin, &Gem), With<Player>>,
+    player: Single<
+        (
+            &Health,
+            &Damage,
+            &Defense,
+            &GoldCoin,
+            &Gem,
+            &RunCharacter,
+            &ActiveEffectSpecs,
+        ),
+        With<Player>,
+    >,
     paths: Res<SavePaths>,
     mut run_available: ResMut<RunSaveAvailable>,
     view2d: Res<View2d>,
@@ -103,6 +116,8 @@ pub fn interact_with_quit_main_menu_button(
                     &player.3,
                     &player.4,
                 ),
+                &player.5,
+                &player.6,
                 view2d.as_ref(),
                 AppState::GamePause,
             );

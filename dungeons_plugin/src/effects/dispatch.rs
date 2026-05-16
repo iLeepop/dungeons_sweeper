@@ -12,6 +12,7 @@ use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
 use crate::components::entity_status::Health;
+use crate::components::Damage;
 use crate::components::Enemy;
 use crate::components::Player;
 use crate::effects::context::{
@@ -101,6 +102,7 @@ pub fn effect_phase_dispatch_system(
     mut commands: Commands,
     player_entity: Single<Entity, With<Player>>,
     mut player_health_q: Query<&mut Health, With<Player>>,
+    mut player_damage_q: Query<&mut Damage, With<Player>>,
     // 不包含敌方格：避免与玩家攻击敌方 Health 的写入冲突或误当作「地块回血」目标。
     mut tile_health_q: Query<&mut Health, (Without<Player>, Without<Enemy>)>,
     world_hosts: Query<(Entity, &WorldEffectLoader), With<WorldEffectHost>>,
@@ -208,12 +210,14 @@ pub fn effect_phase_dispatch_system(
                         continue;
                     };
                     let player_health = player_health_q.get_mut(player_ent).ok();
+                    let player_damage = player_damage_q.get_mut(player_ent).ok();
                     let mut ctx = PlayerEffectContext {
                         commands: &mut commands,
                         player: player_ent,
                         trigger_coord: msg.coord,
                         trigger_tile: msg.tile,
                         player_health,
+                        player_damage,
                     };
                     entry.behavior().apply_on_player(&mut ctx);
                 }

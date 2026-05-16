@@ -7,6 +7,7 @@ use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
 use crate::components::entity_status::Health;
+use crate::components::Damage;
 use crate::resources::board::Board;
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,8 @@ pub struct PlayerEffectContext<'w, 's, 'a> {
     pub trigger_tile: Option<Entity>,
     /// 玩家生命值（单玩家场景下由调度器解析）。
     pub player_health: Option<Mut<'a, Health>>,
+    /// 玩家攻击力（击杀加成等效果使用）。
+    pub player_damage: Option<Mut<'a, Damage>>,
 }
 
 // ---------------------------------------------------------------------------
