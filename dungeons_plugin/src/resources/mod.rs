@@ -12,6 +12,7 @@ pub mod player_ui;
 pub mod tile;
 pub mod tile_map;
 pub mod view2d;
+pub mod tiles_assets;
 
 pub use board::*;
 pub use board_option::*;
@@ -27,3 +28,4 @@ pub use player_ui::*;
 pub use tile::*;
 pub use tile_map::*;
 pub use view2d::*;
+pub use tiles_assets::*;

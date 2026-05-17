@@ -34,7 +34,7 @@ use crate::effects::EffectCounters;
 use crate::effects::{WorldEffectHost, WorldEffectLoader};
 use crate::observers::{enemy_havier_handler, player_action, taggle_consumer, view_move_consumer};
 use crate::resources::board::Board;
-use crate::resources::apply_stage_to_board_option;
+use crate::resources::{TilesAssets, apply_stage_to_board_option, tile};
 use crate::resources::DifficultyTuning;
 use crate::resources::EnemyType;
 use crate::resources::PlayerOptions;
@@ -88,6 +88,7 @@ fn spawn_board_from_tile_map(
     tile_map: TileMap,
     board_options: &BoardOption,
     enemy_assets: &EnemyAssets,
+    tiles_assets: &TilesAssets,
     grass_heal: i8,
 ) -> Board {
     #[cfg(feature = "debug")]
@@ -127,6 +128,7 @@ fn spawn_board_from_tile_map(
                 tile_size,
                 padding,
                 &board_options.counter_font,
+                &tiles_assets,
                 &mut tiles,
                 &mut covers,
                 board_size,
@@ -155,9 +157,10 @@ fn insert_board_from_tile_map(
     tile_map: TileMap,
     board_options: &BoardOption,
     enemy_assets: &EnemyAssets,
+    tiles_assets: &TilesAssets,
     grass_heal: i8,
 ) {
-    let board = spawn_board_from_tile_map(commands, tile_map, board_options, enemy_assets, grass_heal);
+    let board = spawn_board_from_tile_map(commands, tile_map, board_options, enemy_assets, &tiles_assets, grass_heal);
     commands.insert_resource(board);
 }
 
@@ -165,6 +168,7 @@ pub(crate) fn rebuild_board_procedural(
     commands: &mut Commands,
     board_options: &BoardOption,
     enemy_assets: &EnemyAssets,
+    tiles_assets: &TilesAssets,
     player_options: &PlayerOptions,
     tuning: &DifficultyTuning,
     stage: u32,
@@ -192,7 +196,7 @@ pub(crate) fn rebuild_board_procedural(
         tuning,
     );
 
-    insert_board_from_tile_map(commands, tile_map, board_options, enemy_assets, grass_heal);
+    insert_board_from_tile_map(commands, tile_map, board_options, enemy_assets, &tiles_assets, grass_heal);
 }
 
 pub(crate) fn rebuild_board_from_snapshot(
@@ -200,6 +204,7 @@ pub(crate) fn rebuild_board_from_snapshot(
     save: &RunSave,
     board_options: &BoardOption,
     enemy_assets: &EnemyAssets,
+    tiles_assets: &TilesAssets,
     world_hosts: &Query<Entity, With<WorldEffectHost>>,
     board_entity_to_despawn: Option<Entity>,
     grass_heal: i8,
@@ -219,6 +224,7 @@ pub(crate) fn rebuild_board_from_snapshot(
         tile_map,
         board_options,
         enemy_assets,
+        &tiles_assets,
         grass_heal,
     );
     apply_board_restoration(commands, &mut board, &save.board, &mut *enemy_health);
@@ -230,6 +236,7 @@ pub(crate) fn rebuild_board_entities(
     commands: &mut Commands,
     board_options: &BoardOption,
     enemy_assets: &EnemyAssets,
+    tiles_assets: &TilesAssets,
     player_options: &PlayerOptions,
     tuning: &DifficultyTuning,
     stage: u32,
@@ -241,6 +248,7 @@ pub(crate) fn rebuild_board_entities(
         commands,
         board_options,
         enemy_assets,
+        &tiles_assets,
         player_options,
         tuning,
         stage,
@@ -256,6 +264,7 @@ pub fn advance_stage_and_rebuild_board(
     board_options: &mut BoardOption,
     stage: &mut StageConfig,
     enemy_assets: &EnemyAssets,
+    tiles_assets: &TilesAssets,
     player_options: &PlayerOptions,
     tuning: &DifficultyTuning,
     world_hosts: &Query<Entity, With<WorldEffectHost>>,
@@ -268,6 +277,7 @@ pub fn advance_stage_and_rebuild_board(
         commands,
         board_options,
         enemy_assets,
+        tiles_assets,
         player_options,
         tuning,
         stage.stage,
@@ -426,6 +436,7 @@ impl DungeonsPlugin {
         mut commands: Commands,
         board_options: Res<BoardOption>,
         enemy_assets: Res<EnemyAssets>,
+        tiles_assets: Res<TilesAssets>,
         player_options: Res<PlayerOptions>,
         tuning: Res<DifficultyTuning>,
         stage: Res<StageConfig>,
@@ -447,6 +458,7 @@ impl DungeonsPlugin {
                 &save,
                 board_options.as_ref(),
                 enemy_assets.as_ref(),
+                tiles_assets.as_ref(),
                 &world_hosts,
                 board_ent,
                 grass_heal,
@@ -470,6 +482,7 @@ impl DungeonsPlugin {
                 &mut commands,
                 board_options.as_ref(),
                 enemy_assets.as_ref(),
+                tiles_assets.as_ref(),
                 player_options.as_ref(),
                 tuning.as_ref(),
                 stage.stage,
@@ -489,6 +502,7 @@ impl DungeonsPlugin {
         tile_size: TileSize,
         padding: u32,
         counter_font: &Handle<Font>,
+        tiles_assets: &TilesAssets,
         tiles: &mut HashMap<Coordinates, Entity>,
         covers: &mut HashMap<Coordinates, Entity>,
         board_size: Vec3,
@@ -517,7 +531,7 @@ impl DungeonsPlugin {
                             commands
                                 .spawn(safe_bundle(coord, tile_size, padding, board_size))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding)).id();
+                                    let cover = parent.spawn(cover(tile_size, padding, tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -529,7 +543,7 @@ impl DungeonsPlugin {
                             commands
                                 .spawn(out_way_bundle(coord, tile_size, padding, board_size))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding)).id();
+                                    let cover = parent.spawn(cover(tile_size, padding, tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -547,7 +561,7 @@ impl DungeonsPlugin {
                                     grass_heal,
                                 ))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding)).id();
+                                    let cover = parent.spawn(cover(tile_size, padding, tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -567,7 +581,7 @@ impl DungeonsPlugin {
                                     difficulty_factor,
                                 ))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding)).id();
+                                    let cover = parent.spawn(cover(tile_size, padding, tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -586,7 +600,7 @@ impl DungeonsPlugin {
                                     counter_font,
                                 ))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding)).id();
+                                    let cover = parent.spawn(cover(tile_size, padding, &tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -598,7 +612,7 @@ impl DungeonsPlugin {
                             commands
                                 .spawn(item_bundle(coord, tile_size, padding, board_size))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding)).id();
+                                    let cover = parent.spawn(cover(tile_size, padding, &tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -667,7 +681,7 @@ fn setup_board_options(
     commands.insert_resource(PlayerOptions::default());
     commands.insert_resource(DifficultyTuning::default());
 
-    // 加载资源
+    // 加载敌方单位精灵表资源
     let enemys_texture: Handle<Image> = asset_server.load("sprites/enemys.png");
     let enemys_layout = TextureAtlasLayout::from_grid(UVec2::splat(72), 5, 3, None, None);
     let enemys_texture_atlas_layout = textures_atlas_layouts.add(enemys_layout);
@@ -700,4 +714,13 @@ fn setup_board_options(
     });
 
     commands.insert_resource(PendingNewRunSetup::default());
+
+    // 预留加载瓷砖资源
+    let tiles_texture = asset_server.load("sprites/tiles.png");
+    let tiles_layout = TextureAtlasLayout::from_grid(UVec2::splat(16), 3, 1, None, None);
+    let tiles_texture_atlas_layout = textures_atlas_layouts.add(tiles_layout);
+    commands.insert_resource(TilesAssets {
+        texture: tiles_texture,
+        atlas_layout: tiles_texture_atlas_layout,
+    });
 }

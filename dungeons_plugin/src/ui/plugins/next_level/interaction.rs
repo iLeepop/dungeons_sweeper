@@ -11,6 +11,8 @@ use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
 use crate::resources::DifficultyTuning;
 use crate::resources::enemy_assets::EnemyAssets;
+use crate::resources::tiles_assets;
+use crate::resources::tiles_assets::TilesAssets;
 use crate::resources::PlayerOptions;
 use crate::resources::StageConfig;
 use crate::resources::View2d;
@@ -32,6 +34,7 @@ pub fn interact_with_next_level_continue(
     mut board_options: ResMut<BoardOption>,
     mut stage: ResMut<StageConfig>,
     enemy_assets: Res<EnemyAssets>,
+    tiles_assets: Res<TilesAssets>,
     player_options: Res<PlayerOptions>,
     tuning: Res<DifficultyTuning>,
     board: Res<Board>,
@@ -66,6 +69,7 @@ pub fn interact_with_next_level_continue(
                 &mut *board_options,
                 &mut *stage,
                 enemy_assets.as_ref(),
+                tiles_assets.as_ref(),
                 player_options.as_ref(),
                 tuning.as_ref(),
                 &world_hosts,
