@@ -11,7 +11,6 @@ use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
 use crate::resources::DifficultyTuning;
 use crate::resources::enemy_assets::EnemyAssets;
-use crate::resources::tiles_assets;
 use crate::resources::tiles_assets::TilesAssets;
 use crate::resources::PlayerOptions;
 use crate::resources::StageConfig;
@@ -40,8 +39,10 @@ pub fn interact_with_next_level_continue(
     board: Res<Board>,
     world_hosts: Query<Entity, With<WorldEffectHost>>,
     paths: Res<SavePaths>,
-    mut global_gem: Single<&mut Gem, With<GlobalProfile>>,
-    mut player_gem: Single<&mut Gem, (With<Player>, Without<GlobalProfile>)>,
+    mut gems: ParamSet<(
+        Query<&mut Gem, With<GlobalProfile>>,
+        Query<&mut Gem, (With<Player>, Without<GlobalProfile>)>,
+    )>,
     unlocked: Res<UnlockedCharacters>,
     selected: Res<SelectedCharacter>,
     active_effects: Single<&ActiveEffectSpecs, With<Player>>,
@@ -53,15 +54,24 @@ pub fn interact_with_next_level_continue(
     match interaction {
         Interaction::Pressed => {
             bg.0 = tailwind::EMERALD_800.into();
-            let run_gems = player_gem.0;
-            player_gem.0 = 0;
-            merge_run_gems_into_global(
-                paths.as_ref(),
-                &mut global_gem,
-                run_gems,
-                unlocked.as_ref(),
-                selected.id,
-            );
+            let run_gems = gems
+                .p1()
+                .single_mut()
+                .map(|mut g| {
+                    let v = g.0;
+                    g.0 = 0;
+                    v
+                })
+                .unwrap_or(0);
+            if let Ok(mut global_gem) = gems.p0().single_mut() {
+                merge_run_gems_into_global(
+                    paths.as_ref(),
+                    global_gem.as_mut(),
+                    run_gems,
+                    unlocked.as_ref(),
+                    selected.id,
+                );
+            }
             let grass_heal = grass_heal_amount_from_specs(&active_effects.0).unwrap_or(0);
             let board_ent = board.board_entity;
             advance_stage_and_rebuild_board(

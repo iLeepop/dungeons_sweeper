@@ -20,7 +20,7 @@ impl Plugin for NextLevelPlugin {
                 Update,
                 (
                     interact_with_next_level_continue,
-                    interact_with_next_level_quit_main_menu
+                    interact_with_next_level_quit_main_menu,
                 )
                     .run_if(in_state(AppState::NextLevel)),
             );
