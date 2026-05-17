@@ -2,10 +2,10 @@ mod defs;
 mod id;
 mod unlock;
 
-pub use defs::{character_def, effects_from_character, ALL_CHARACTERS};
+pub use defs::{ALL_CHARACTERS, character_def, effects_from_character};
 pub use id::CharacterId;
 pub use unlock::{
-    persist_character_selection, try_unlock_character, SelectedCharacter, UnlockedCharacters,
+    SelectedCharacter, UnlockedCharacters, persist_character_selection, try_unlock_character,
 };
 
 use bevy::prelude::*;

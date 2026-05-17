@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
-use crate::character::{RunCharacter, CharacterId};
-use crate::components::{Damage, Defense, Health, Player, GoldCoin, Gem};
-use crate::effects::{build_player_loader, ActiveEffectSpecs, SerializableEffect};
+use crate::character::{CharacterId, RunCharacter};
+use crate::components::{Damage, Defense, Gem, GoldCoin, Health, Player};
+use crate::effects::{ActiveEffectSpecs, SerializableEffect, build_player_loader};
 use crate::resources::PlayerOptions;
 use crate::save::PlayerSnapshot;
 

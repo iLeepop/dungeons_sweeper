@@ -1,18 +1,16 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
+use crate::AppState;
 use crate::character::{
-    effects_from_character, persist_character_selection, PendingNewRunSetup, SelectedCharacter,
-    UnlockedCharacters,
+    PendingNewRunSetup, SelectedCharacter, UnlockedCharacters, effects_from_character,
+    persist_character_selection,
 };
 use crate::components::Gem;
-use crate::save::GlobalProfile;
-use crate::AppState;
 use crate::components::Player;
 use crate::resources::StageConfig;
-use crate::save::{delete_run_save, load_run_save, PendingRunRestore, RunSaveAvailable, SavePaths};
-use crate::ui::plugins::main_menu::components::{
-    ContinueRunButton, QuitButton, StartGameButton,
-};
+use crate::save::GlobalProfile;
+use crate::save::{PendingRunRestore, RunSaveAvailable, SavePaths, delete_run_save, load_run_save};
+use crate::ui::plugins::main_menu::components::{ContinueRunButton, QuitButton, StartGameButton};
 
 pub fn interact_with_start_game_button(
     mut start_button: Query<

@@ -55,17 +55,19 @@ pub fn balance_enemy_loadout(
     tuning: &DifficultyTuning,
 ) {
     let heal_budget = grass_tile_count as f32 * player_options.grass_heal_per_trigger as f32
-        + safe_count as f32 * SAFE_TILE_TRIGGER_CAP as f32 * player_options.safe_heal_per_trigger as f32;
+        + safe_count as f32
+            * SAFE_TILE_TRIGGER_CAP as f32
+            * player_options.safe_heal_per_trigger as f32;
 
     let effective_atk = player_options.starting_damage as f32
-        + tuning.treasure_atk_fraction * treasure_count as f32 * player_options.treasure_damage_bonus as f32;
+        + tuning.treasure_atk_fraction
+            * treasure_count as f32
+            * player_options.treasure_damage_bonus as f32;
 
-    let hp_cap_kill =
-        effective_atk * monster_count as f32 * tuning.avg_hits_per_monster.max(0.1);
+    let hp_cap_kill = effective_atk * monster_count as f32 * tuning.avg_hits_per_monster.max(0.1);
 
-    let sustain_pool = player_options.starting_hp as f32
-        + player_options.starting_defense as f32
-        + heal_budget;
+    let sustain_pool =
+        player_options.starting_hp as f32 + player_options.starting_defense as f32 + heal_budget;
     let hp_cap_survive = tuning.survive_eta.max(0.1) * sustain_pool;
 
     let target_cap = hp_cap_kill.min(hp_cap_survive).floor().max(1.0) as i32;

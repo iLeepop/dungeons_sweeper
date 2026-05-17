@@ -3,8 +3,8 @@ use std::path::{Path, PathBuf};
 
 use bevy::log;
 use bevy::prelude::*;
-use serde::de::DeserializeOwned;
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 
 #[derive(Resource, Clone)]
 pub struct SavePaths {

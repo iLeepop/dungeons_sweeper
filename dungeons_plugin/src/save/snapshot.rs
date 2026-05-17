@@ -1,18 +1,18 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::AppState;
+use crate::character::CharacterId;
 use crate::components::{Coordinates, Enemy, Exposed, Uncover};
 use crate::components::{Damage, Defense, Gem, GoldCoin, Health, Player};
+use crate::effects::{ActiveEffectSpecs, SerializableEffect, capture_effect_specs};
+use crate::resources::StageConfig;
 use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
 use crate::resources::enemy_type::EnemyType;
 use crate::resources::tile::Tile;
 use crate::resources::tile_map::TileMap;
-use crate::resources::StageConfig;
 use crate::resources::view2d::View2d;
-use crate::character::CharacterId;
-use crate::effects::{capture_effect_specs, ActiveEffectSpecs, SerializableEffect};
-use crate::AppState;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SerializableTile {
@@ -103,10 +103,7 @@ pub fn board_snapshot_from_board(
         let mut row = Vec::with_capacity(width as usize);
         for x in 0..width {
             let coord = Coordinates { x, y };
-            let tile = board
-                .tile_map
-                .get_tile(coord)
-                .expect("in-bounds tile");
+            let tile = board.tile_map.get_tile(coord).expect("in-bounds tile");
             row.push(SerializableTile::from(tile));
         }
         tiles.push(row);

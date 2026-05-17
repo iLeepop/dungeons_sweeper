@@ -1,7 +1,7 @@
 use bevy::log;
 use bevy::{color::palettes::tailwind, prelude::*};
 
-use crate::character::{character_def, CharacterId, SelectedCharacter, UnlockedCharacters};
+use crate::character::{CharacterId, SelectedCharacter, UnlockedCharacters, character_def};
 use crate::components::Gem;
 use crate::save::{GlobalProfile, RunSaveAvailable};
 use crate::ui::UiAssets;
@@ -9,8 +9,8 @@ use crate::ui::{
     Ui,
     plugins::main_menu::components::{
         CharacterCarousel, CharacterPortraitButton, ContinueRunButton, MainMenu,
-        MainMenuCharacterHint, MainMenuCharacterName, MainMenuCharacterPortrait, MainMenuGemDisplay,
-        QuitButton, StartGameButton,
+        MainMenuCharacterHint, MainMenuCharacterName, MainMenuCharacterPortrait,
+        MainMenuGemDisplay, QuitButton, StartGameButton,
     },
 };
 
@@ -39,11 +39,7 @@ pub fn despawn_main_menu(mut commands: Commands, main_menu: Single<Entity, With<
 }
 
 fn portrait_brightness(unlocked: bool) -> f32 {
-    if unlocked {
-        1.0
-    } else {
-        0.35
-    }
+    if unlocked { 1.0 } else { 0.35 }
 }
 
 pub fn build_main_menu(
@@ -66,15 +62,9 @@ pub fn build_main_menu(
     let (start_bg, start_text) = button_style_for_unlocked(selected_unlocked);
     let continue_enabled = can_continue && selected_unlocked;
     let (continue_bg, continue_text) = if continue_enabled {
-        (
-            tailwind::SLATE_500.into(),
-            Color::WHITE,
-        )
+        (tailwind::SLATE_500.into(), Color::WHITE)
     } else {
-        (
-            tailwind::SLATE_700.into(),
-            Color::srgb(0.7, 0.7, 0.7),
-        )
+        (tailwind::SLATE_700.into(), Color::srgb(0.7, 0.7, 0.7))
     };
 
     let hint = if unlocked {

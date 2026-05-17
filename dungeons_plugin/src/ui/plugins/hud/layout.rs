@@ -1,7 +1,7 @@
 use bevy::log;
 use bevy::prelude::*;
 
-use crate::ui::plugins::hud::{HPBar, Hud, HPProgressBar};
+use crate::ui::plugins::hud::{HPBar, HPProgressBar, Hud};
 use crate::ui::{Ui, UiAssets};
 
 pub fn spawn_hud(commands: Commands, ui_assets: Res<UiAssets>) {

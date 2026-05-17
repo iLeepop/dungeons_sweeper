@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::character::id::CharacterId;
-use crate::save::{persist_global_save, GlobalSave, SavePaths};
+use crate::save::{GlobalSave, SavePaths, persist_global_save};
 
 #[derive(Resource, Debug, Clone, Default)]
 pub struct SelectedCharacter {

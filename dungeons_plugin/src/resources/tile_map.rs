@@ -6,7 +6,9 @@ use std::ops::{Deref, DerefMut};
 use crate::{
     components::coordinates::Coordinates,
     resources::{
-        difficulty_balance::{balance_enemy_loadout, max_enemy_discriminant_index, pick_weighted_enemy_type},
+        difficulty_balance::{
+            balance_enemy_loadout, max_enemy_discriminant_index, pick_weighted_enemy_type,
+        },
         player_options::{DifficultyTuning, PlayerOptions},
         tile::Tile,
     },

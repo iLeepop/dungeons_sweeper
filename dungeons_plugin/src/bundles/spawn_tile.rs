@@ -1,17 +1,22 @@
 use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
-use crate::components::{Spawn, TriggerRemaining};
 use crate::components::coordinates::Coordinates;
-use crate::resources::board_option::TileSize;
+use crate::components::{Spawn, TriggerRemaining};
+use crate::resources::{TileSize, TilesAssets};
 
 // 出生点地块
 pub fn spawn_bundle(
     coord: Coordinates,
     tile_size: TileSize,
+    tiles_assets: &TilesAssets,
     padding: u32,
     board_size: Vec3,
 ) -> impl Bundle {
+    let atlas = TextureAtlas {
+        layout: tiles_assets.atlas_layout.clone(),
+        index: 7,
+    };
     return (
         Name::new(format!("Tile_{}", coord)),
         Transform::from_xyz(
@@ -22,7 +27,8 @@ pub fn spawn_bundle(
             1.0,
         ),
         Sprite {
-            color: Color::srgb(0.0, 0.7, 0.5),
+            image: tiles_assets.texture.clone(),
+            texture_atlas: Some(atlas),
             custom_size: Some(Vec2::new(
                 (tile_size.width - padding) as f32,
                 (tile_size.height - padding) as f32,

@@ -7,9 +7,9 @@ mod layout;
 use crate::AppState;
 use crate::components::Player;
 use crate::components::view::View;
+use crate::resources::StageConfig;
 use crate::resources::View2d;
 use crate::resources::board::Board;
-use crate::resources::StageConfig;
 use crate::ui::plugins::pause_menu::interaction::{
     interact_with_quit_main_menu_button, interact_with_restart_button, interact_with_resume_button,
 };
@@ -38,8 +38,8 @@ impl Plugin for PauseMenuPlugin {
             OnTransition {
                 exited: AppState::GamePause,
                 entered: AppState::PreGame,
-            }, 
-            Self::restart_game
+            },
+            Self::restart_game,
         )
         .add_systems(
             OnTransition {

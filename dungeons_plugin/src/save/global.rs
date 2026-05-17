@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::character::CharacterId;
 use crate::character::{SelectedCharacter, UnlockedCharacters};
 use crate::components::Gem;
-use crate::save::io::{read_ron, write_ron, SavePaths};
+use crate::save::io::{SavePaths, read_ron, write_ron};
 
 pub const GLOBAL_SAVE_VERSION: u32 = 2;
 
@@ -112,17 +112,10 @@ pub fn award_stage_gems_to_global(
 }
 
 pub fn spawn_global_profile(commands: &mut Commands, save: &GlobalSave) {
-    commands.spawn((
-        Name::new("GlobalProfile"),
-        GlobalProfile,
-        Gem(save.gems),
-    ));
+    commands.spawn((Name::new("GlobalProfile"), GlobalProfile, Gem(save.gems)));
 }
 
-pub fn init_character_resources_from_save(
-    commands: &mut Commands,
-    save: &GlobalSave,
-) {
+pub fn init_character_resources_from_save(commands: &mut Commands, save: &GlobalSave) {
     let unlocked = UnlockedCharacters::from_save(save);
     let selected = CharacterId::from_index(save.last_selected_character)
         .filter(|id| unlocked.is_unlocked(*id))

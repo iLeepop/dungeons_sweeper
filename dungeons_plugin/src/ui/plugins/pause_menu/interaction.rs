@@ -4,13 +4,11 @@ use crate::AppState;
 use crate::character::RunCharacter;
 use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
 use crate::effects::ActiveEffectSpecs;
-use crate::resources::board::Board;
-use crate::resources::board_option::BoardOption;
 use crate::resources::StageConfig;
 use crate::resources::View2d;
-use crate::save::{
-    delete_run_save, save_run_before_board_teardown, RunSaveAvailable, SavePaths,
-};
+use crate::resources::board::Board;
+use crate::resources::board_option::BoardOption;
+use crate::save::{RunSaveAvailable, SavePaths, delete_run_save, save_run_before_board_teardown};
 use crate::ui::plugins::pause_menu::components::{QuitMainMenuButton, RestartButton, ResumeButton};
 
 pub fn interact_with_restart_button(
@@ -109,13 +107,7 @@ pub fn interact_with_quit_main_menu_button(
                 board.as_ref(),
                 board_options.as_ref(),
                 &enemy_health,
-                (
-                    &player.0,
-                    &player.1,
-                    &player.2,
-                    &player.3,
-                    &player.4,
-                ),
+                (&player.0, &player.1, &player.2, &player.3, &player.4),
                 &player.5,
                 &player.6,
                 view2d.as_ref(),

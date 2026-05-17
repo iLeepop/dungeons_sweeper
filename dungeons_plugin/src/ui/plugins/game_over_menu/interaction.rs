@@ -1,15 +1,15 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
-use crate::character::{
-    effects_from_character, PendingNewRunSetup, SelectedCharacter, UnlockedCharacters,
-};
 use crate::AppState;
+use crate::character::{
+    PendingNewRunSetup, SelectedCharacter, UnlockedCharacters, effects_from_character,
+};
 use crate::components::Player;
-use crate::save::{delete_run_save, RunSaveAvailable, SavePaths};
 use crate::components::view::View;
+use crate::resources::StageConfig;
 use crate::resources::View2d;
 use crate::resources::board::Board;
-use crate::resources::StageConfig;
+use crate::save::{RunSaveAvailable, SavePaths, delete_run_save};
 use crate::ui::plugins::game_over_menu::components::{
     GameOverQuitMainMenuButton, GameOverRestartButton,
 };

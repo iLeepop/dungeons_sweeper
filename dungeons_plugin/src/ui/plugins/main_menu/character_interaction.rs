@@ -1,10 +1,10 @@
+use bevy::color::palettes::tailwind;
 use bevy::ecs::query::QueryFilter;
 use bevy::prelude::*;
-use bevy::color::palettes::tailwind;
 
 use crate::character::{
-    character_def, persist_character_selection, try_unlock_character, SelectedCharacter,
-    UnlockedCharacters,
+    SelectedCharacter, UnlockedCharacters, character_def, persist_character_selection,
+    try_unlock_character,
 };
 use crate::components::Gem;
 use crate::save::{GlobalProfile, RunSaveAvailable, SavePaths};
@@ -45,12 +45,7 @@ pub fn interact_with_character_portrait(
     }
     let id = selected.id;
     if unlocked.is_unlocked(id) {
-        persist_character_selection(
-            paths.as_ref(),
-            global_gem.0,
-            unlocked.as_ref(),
-            id,
-        );
+        persist_character_selection(paths.as_ref(), global_gem.0, unlocked.as_ref(), id);
         return;
     }
     let _ = try_unlock_character(
@@ -102,10 +97,7 @@ pub fn refresh_main_menu_character_display(
             };
         }
     }
-    let gem_changed = global_gem
-        .single()
-        .map(|g| g.is_changed())
-        .unwrap_or(false);
+    let gem_changed = global_gem.single().map(|g| g.is_changed()).unwrap_or(false);
     if gem_changed || unlocked.is_changed() {
         if let Ok(mut t) = menu_texts.p2().single_mut() {
             if let Ok(gem) = global_gem.single() {

@@ -2,8 +2,8 @@ use bevy::log;
 use bevy::prelude::*;
 use std::collections::HashMap;
 
-use crate::components::coordinates::Coordinates;
 use crate::components::Enemy;
+use crate::components::coordinates::Coordinates;
 use crate::components::entity_status::Health;
 use crate::resources::board_option::TileSize;
 use crate::resources::tile_map::TileMap;

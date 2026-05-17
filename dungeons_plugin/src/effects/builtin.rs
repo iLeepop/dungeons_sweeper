@@ -21,8 +21,8 @@ impl EffectBehavior for GrassHealPlayer {
             Some(h) => {
                 // 使用选项中的上限，避免 HUD / 草地回复 / 难度公式三者不一致。
                 let cap = ctx.player_hp_cap as i32;
-                h.0 = (h.0 as i32 + self.0 as i32)
-                    .clamp(i8::MIN as i32, cap.min(i8::MAX as i32)) as i8;
+                h.0 = (h.0 as i32 + self.0 as i32).clamp(i8::MIN as i32, cap.min(i8::MAX as i32))
+                    as i8;
             }
             None => {}
         }

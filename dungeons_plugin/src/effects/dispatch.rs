@@ -10,11 +10,11 @@
 
 use bevy::prelude::*;
 
-use crate::components::coordinates::Coordinates;
-use crate::components::entity_status::Health;
 use crate::components::Damage;
 use crate::components::Enemy;
 use crate::components::Player;
+use crate::components::coordinates::Coordinates;
+use crate::components::entity_status::Health;
 use crate::effects::context::{
     EnemyTileEffectContext, PlayerEffectContext, TileEffectContext, WorldEffectContext,
 };
@@ -23,8 +23,8 @@ use crate::effects::loaders::{
     EnemyEffectLoader, PlayerEffectLoader, TileEffectLoader, WorldEffectHost, WorldEffectLoader,
 };
 use crate::effects::trigger::EffectPhase;
-use crate::resources::board::Board;
 use crate::resources::PlayerOptions;
+use crate::resources::board::Board;
 
 // ---------------------------------------------------------------------------
 // 跨系统传递的调度消息
@@ -47,21 +47,10 @@ pub struct EffectPhaseMessage {
 
 #[derive(Clone, Copy, Debug)]
 enum EffectWorkItem {
-    World {
-        host: Entity,
-        index: usize,
-    },
-    Player {
-        index: usize,
-    },
-    Tile {
-        tile: Entity,
-        index: usize,
-    },
-    Enemy {
-        tile: Entity,
-        index: usize,
-    },
+    World { host: Entity, index: usize },
+    Player { index: usize },
+    Tile { tile: Entity, index: usize },
+    Enemy { tile: Entity, index: usize },
 }
 
 #[derive(Debug)]

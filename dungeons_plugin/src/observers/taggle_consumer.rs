@@ -15,11 +15,13 @@ use crate::effects::EffectPhase;
 use crate::effects::EffectPhaseMessage;
 use crate::events::enemy_event::EnemyAttackEvent;
 use crate::events::taggle::ToggleEvent;
+use crate::resources::PlayerOptions;
+use crate::resources::TilesAssets;
 use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
 use crate::resources::tile::Tile;
 use crate::resources::tile_map::enemy_neighbor_display_label;
-use crate::resources::PlayerOptions;
+use crate::resources::tiles_assets;
 
 pub fn taggle_consumer(
     event: On<ToggleEvent>,
@@ -27,6 +29,7 @@ pub fn taggle_consumer(
     mut board: ResMut<Board>,
     board_option: Res<BoardOption>,
     player_options: Res<PlayerOptions>,
+    tiles_assets: Res<TilesAssets>,
     mut next_state: ResMut<NextState<AppState>>,
     mut effect_counters: ResMut<EffectCounters>,
     mut effect_phase_writer: MessageWriter<EffectPhaseMessage>,
@@ -120,9 +123,7 @@ pub fn taggle_consumer(
     // ---------------------------------------------------------------------------
     if treasure.is_some() {
         if let Ok((_, mut dmg, _)) = health_queries.p2().get_mut(*player_entity) {
-            dmg.0 = dmg
-                .0
-                .saturating_add(player_options.treasure_damage_bonus);
+            dmg.0 = dmg.0.saturating_add(player_options.treasure_damage_bonus);
         }
     }
 
@@ -139,24 +140,24 @@ pub fn taggle_consumer(
             }
         };
         let killed_opt = match health_queries.p0().get_mut(tile_ent) {
-                Ok(mut enemy_hp) => {
-                    apply_player_damage_to_enemy_health(&mut enemy_hp, player_atk);
-                    #[cfg(feature = "debug")]
-                    log::info!(
-                        "player attacks enemy: atk={}, enemy hp={}",
-                        player_atk,
-                        enemy_hp.0,
-                    );
-                    Some(enemy_hp.0 <= 0)
-                }
-                Err(_) => {
-                    log::error!("enemy tile missing Health");
-                    None
-                }
-            };
+            Ok(mut enemy_hp) => {
+                apply_player_damage_to_enemy_health(&mut enemy_hp, player_atk);
+                #[cfg(feature = "debug")]
+                log::info!(
+                    "player attacks enemy: atk={}, enemy hp={}",
+                    player_atk,
+                    enemy_hp.0,
+                );
+                Some(enemy_hp.0 <= 0)
+            }
+            Err(_) => {
+                log::error!("enemy tile missing Health");
+                None
+            }
+        };
 
-            if let Some(killed) = killed_opt {
-                if killed {
+        if let Some(killed) = killed_opt {
+            if killed {
                 let hp_sum_neighborhood =
                     board.adjacent_enemy_hp_sum_from_entities(coord, &health_queries.p1());
                 let stored = hp_sum_neighborhood.min(u16::MAX as u32) as u16;
@@ -179,6 +180,7 @@ pub fn taggle_consumer(
                         .spawn(enemy_neighbor_bundle(
                             coord,
                             board.tile_size,
+                            &tiles_assets,
                             board_option.padding,
                             board_size,
                             hp_sum_neighborhood,
@@ -202,23 +204,21 @@ pub fn taggle_consumer(
                     log::error!("board_entity missing, cannot spawn replacement tile");
                     board.tiles.remove(&coord);
                 }
-                }
-
-                // --- 刷新周围 EnemyNeighbor：展示值为邻格敌方实体 HP 之和 ---
-                refresh_enemy_neighbor_displays_around(
-                    coord,
-                    &mut board,
-                    &health_queries.p1(),
-                    &children_q,
-                    &mut text2d_q,
-                );
             }
+
+            // --- 刷新周围 EnemyNeighbor：展示值为邻格敌方实体 HP 之和 ---
+            refresh_enemy_neighbor_displays_around(
+                coord,
+                &mut board,
+                &health_queries.p1(),
+                &children_q,
+                &mut text2d_q,
+            );
+        }
     }
 
     // --- 效果系统：格子触发计数 + 广播「玩家已触发该格」阶段（具体执行在 PostUpdate） ---
-    effect_counters.player_tile_triggers = effect_counters
-        .player_tile_triggers
-        .saturating_add(1);
+    effect_counters.player_tile_triggers = effect_counters.player_tile_triggers.saturating_add(1);
     effect_phase_writer.write(EffectPhaseMessage {
         phase: EffectPhase::AfterPlayerTileTrigger,
         coord: Some(event.0),

@@ -5,9 +5,9 @@
 
 use bevy::prelude::*;
 
+use crate::components::Damage;
 use crate::components::coordinates::Coordinates;
 use crate::components::entity_status::Health;
-use crate::components::Damage;
 use crate::resources::board::Board;
 
 // ---------------------------------------------------------------------------

@@ -4,32 +4,32 @@ mod run;
 mod snapshot;
 
 pub use global::{
-    award_stage_gems_to_global, init_character_resources_from_save, load_global_save,
-    merge_run_gems_into_global, persist_global_save, spawn_global_profile, GlobalProfile,
-    GlobalSave, GLOBAL_SAVE_VERSION,
+    GLOBAL_SAVE_VERSION, GlobalProfile, GlobalSave, award_stage_gems_to_global,
+    init_character_resources_from_save, load_global_save, merge_run_gems_into_global,
+    persist_global_save, spawn_global_profile,
 };
 pub use io::SavePaths;
 pub use run::{
-    capture_run_save, delete_run_save, load_run_save, refresh_run_save_available, write_run_save,
-    PendingRunRestore, RunSave, RunSaveAvailable, RUN_SAVE_VERSION,
+    PendingRunRestore, RUN_SAVE_VERSION, RunSave, RunSaveAvailable, capture_run_save,
+    delete_run_save, load_run_save, refresh_run_save_available, write_run_save,
 };
 pub use snapshot::RunPauseKind;
 pub use snapshot::{
-    apply_board_option_from_snapshot, apply_board_restoration, apply_player_snapshot,
-    app_state_from_pause_kind, board_snapshot_from_board, character_id_from_snapshot,
-    restore_view, tile_map_from_snapshot, BoardSnapshot, PlayerSnapshot,
+    BoardSnapshot, PlayerSnapshot, app_state_from_pause_kind, apply_board_option_from_snapshot,
+    apply_board_restoration, apply_player_snapshot, board_snapshot_from_board,
+    character_id_from_snapshot, restore_view, tile_map_from_snapshot,
 };
 
 use bevy::prelude::*;
 
+use crate::AppState;
 use crate::character::{RunCharacter, SelectedCharacter, UnlockedCharacters};
 use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
 use crate::effects::ActiveEffectSpecs;
+use crate::resources::StageConfig;
 use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
-use crate::resources::StageConfig;
 use crate::resources::view2d::View2d;
-use crate::AppState;
 
 /// 最近一次 Game Over 发放的全局宝石数（供 Game Over UI 显示）。
 #[derive(Resource, Default)]

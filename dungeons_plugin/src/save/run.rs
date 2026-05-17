@@ -1,19 +1,20 @@
 use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::AppState;
 use crate::character::RunCharacter;
 use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
 use crate::effects::ActiveEffectSpecs;
+use crate::resources::StageConfig;
 use crate::resources::board::Board;
 use crate::resources::board_option::BoardOption;
-use crate::resources::StageConfig;
 use crate::resources::view2d::View2d;
-use crate::save::io::{delete_file, file_exists, read_ron, write_ron, SavePaths};
-use crate::save::snapshot::{
-    board_snapshot_from_board, capture_player_snapshot, pause_kind_from_state, BoardSnapshot,
-    PlayerSnapshot, };
+use crate::save::io::{SavePaths, delete_file, file_exists, read_ron, write_ron};
 use crate::save::snapshot::RunPauseKind;
-use crate::AppState;
+use crate::save::snapshot::{
+    BoardSnapshot, PlayerSnapshot, board_snapshot_from_board, capture_player_snapshot,
+    pause_kind_from_state,
+};
 
 pub const RUN_SAVE_VERSION: u32 = 2;
 
@@ -70,13 +71,7 @@ pub fn capture_run_save(
     board: &Board,
     board_options: &BoardOption,
     enemy_health: &Query<&Health, With<Enemy>>,
-    player: (
-        &Health,
-        &Damage,
-        &Defense,
-        &GoldCoin,
-        &Gem,
-    ),
+    player: (&Health, &Damage, &Defense, &GoldCoin, &Gem),
     run_character: &RunCharacter,
     active_effects: &ActiveEffectSpecs,
     view2d: &View2d,

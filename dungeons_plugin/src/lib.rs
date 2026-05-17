@@ -15,35 +15,35 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::bundles::{
-    cover, enemy_bundle, enemy_neighbor_bundle, GrassTile, item_bundle, out_way_bundle,
+    GrassTile, cover, enemy_bundle, enemy_neighbor_bundle, item_bundle, out_way_bundle,
     player_bundle, player_bundle_from_snapshot, safe_bundle, spawn_bundle,
 };
 use crate::character::{
-    effects_from_character, PendingNewRunSetup, RunCharacter, SelectedCharacter,
+    PendingNewRunSetup, RunCharacter, SelectedCharacter, effects_from_character,
 };
 use crate::components::{Coordinates, Damage, Defense, Enemy, Gem, GoldCoin, Health, Player, View};
-use crate::effects::{build_player_loader, grass_heal_amount_from_specs, ActiveEffectSpecs};
-use crate::save::{
-    apply_board_option_from_snapshot, apply_board_restoration, apply_player_snapshot,
-    app_state_from_pause_kind, character_id_from_snapshot, delete_run_save, restore_view,
-    tile_map_from_snapshot, PendingRunRestore, RunSave, SavePlugin,
-};
-use crate::effects::effect_phase_dispatch_system;
-use crate::effects::EffectPhaseMessage;
 use crate::effects::EffectCounters;
+use crate::effects::EffectPhaseMessage;
+use crate::effects::effect_phase_dispatch_system;
+use crate::effects::{ActiveEffectSpecs, build_player_loader, grass_heal_amount_from_specs};
 use crate::effects::{WorldEffectHost, WorldEffectLoader};
 use crate::observers::{enemy_havier_handler, player_action, taggle_consumer, view_move_consumer};
-use crate::resources::board::Board;
-use crate::resources::{TilesAssets, apply_stage_to_board_option, tile};
 use crate::resources::DifficultyTuning;
 use crate::resources::EnemyType;
 use crate::resources::PlayerOptions;
-use crate::resources::board_option::{BoardOption, TileSize};
 use crate::resources::StageConfig;
+use crate::resources::board::Board;
+use crate::resources::board_option::{BoardOption, TileSize};
 use crate::resources::enemy_assets::EnemyAssets;
 use crate::resources::tile::Tile;
 use crate::resources::tile_map::TileMap;
 use crate::resources::view2d::View2d;
+use crate::resources::{TilesAssets, apply_stage_to_board_option, tile};
+use crate::save::{
+    PendingRunRestore, RunSave, SavePlugin, app_state_from_pause_kind,
+    apply_board_option_from_snapshot, apply_board_restoration, apply_player_snapshot,
+    character_id_from_snapshot, delete_run_save, restore_view, tile_map_from_snapshot,
+};
 use crate::systems::{input_handler, keyboard_input_handler, uncover_tile};
 use crate::ui::GameUIPlugin;
 use crate::ui::UiAssets;
@@ -160,7 +160,14 @@ fn insert_board_from_tile_map(
     tiles_assets: &TilesAssets,
     grass_heal: i8,
 ) {
-    let board = spawn_board_from_tile_map(commands, tile_map, board_options, enemy_assets, &tiles_assets, grass_heal);
+    let board = spawn_board_from_tile_map(
+        commands,
+        tile_map,
+        board_options,
+        enemy_assets,
+        &tiles_assets,
+        grass_heal,
+    );
     commands.insert_resource(board);
 }
 
@@ -196,7 +203,14 @@ pub(crate) fn rebuild_board_procedural(
         tuning,
     );
 
-    insert_board_from_tile_map(commands, tile_map, board_options, enemy_assets, &tiles_assets, grass_heal);
+    insert_board_from_tile_map(
+        commands,
+        tile_map,
+        board_options,
+        enemy_assets,
+        &tiles_assets,
+        grass_heal,
+    );
 }
 
 pub(crate) fn rebuild_board_from_snapshot(
@@ -297,17 +311,9 @@ pub struct DungeonsPlugin {}
 
 impl Plugin for DungeonsPlugin {
     fn build(&self, app: &mut App) {
+        app.init_state::<AppState>();
 
-        app
-        .init_state::<AppState>();
-
-        app.add_systems(
-            Startup, 
-            (
-                setup_game,
-                setup_board_options
-            ).chain()
-        );
+        app.add_systems(Startup, (setup_game, setup_board_options).chain());
 
         app.add_plugins((SavePlugin, GameUIPlugin));
 
@@ -321,20 +327,13 @@ impl Plugin for DungeonsPlugin {
                 PostUpdate,
                 sync_player_hud_from_components
                     .after(effect_phase_dispatch_system)
-                    .run_if(
-                        in_state(AppState::InGame).or(in_state(AppState::GamePause)),
-                    ),
+                    .run_if(in_state(AppState::InGame).or(in_state(AppState::GamePause))),
             );
 
         app.add_systems(Startup, Self::setup_camera)
             .add_systems(
                 OnEnter(AppState::PreGame),
-                (
-                    prepare_pregame,
-                    Self::setup_player,
-                    Self::create_board,
-                )
-                    .chain(),
+                (prepare_pregame, Self::setup_player, Self::create_board).chain(),
             )
             .add_systems(
                 Update,
@@ -521,7 +520,7 @@ impl DungeonsPlugin {
                         tiles.insert(
                             coord,
                             commands
-                                .spawn(spawn_bundle(coord, tile_size, padding, board_size))
+                                .spawn(spawn_bundle(coord, tile_size, tiles_assets, padding, board_size))
                                 .id(),
                         );
                     }
@@ -529,9 +528,10 @@ impl DungeonsPlugin {
                         tiles.insert(
                             coord,
                             commands
-                                .spawn(safe_bundle(coord, tile_size, padding, board_size))
+                                .spawn(safe_bundle(coord, tile_size, tiles_assets, padding, board_size))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding, tiles_assets)).id();
+                                    let cover =
+                                        parent.spawn(cover(tile_size, padding, tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -541,9 +541,16 @@ impl DungeonsPlugin {
                         tiles.insert(
                             coord,
                             commands
-                                .spawn(out_way_bundle(coord, tile_size, padding, board_size))
+                                .spawn(out_way_bundle(
+                                    coord,
+                                    tile_size,
+                                    tiles_assets,
+                                    padding,
+                                    board_size,
+                                ))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding, tiles_assets)).id();
+                                    let cover =
+                                        parent.spawn(cover(tile_size, padding, tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -556,12 +563,14 @@ impl DungeonsPlugin {
                                 .spawn(GrassTile::grass_bundle(
                                     coord,
                                     tile_size,
+                                    tiles_assets,
                                     padding,
                                     board_size,
                                     grass_heal,
                                 ))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding, tiles_assets)).id();
+                                    let cover =
+                                        parent.spawn(cover(tile_size, padding, tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -574,6 +583,7 @@ impl DungeonsPlugin {
                                 .spawn(enemy_bundle(
                                     coord,
                                     tile_size,
+                                    tiles_assets,
                                     padding,
                                     board_size,
                                     &enemy_assets,
@@ -581,7 +591,8 @@ impl DungeonsPlugin {
                                     difficulty_factor,
                                 ))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding, tiles_assets)).id();
+                                    let cover =
+                                        parent.spawn(cover(tile_size, padding, tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -594,13 +605,15 @@ impl DungeonsPlugin {
                                 .spawn(enemy_neighbor_bundle(
                                     coord,
                                     tile_size,
+                                    &tiles_assets,
                                     padding,
                                     board_size,
                                     u32::from(*hp_sum),
                                     counter_font,
                                 ))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding, &tiles_assets)).id();
+                                    let cover =
+                                        parent.spawn(cover(tile_size, padding, &tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -610,9 +623,16 @@ impl DungeonsPlugin {
                         tiles.insert(
                             coord,
                             commands
-                                .spawn(item_bundle(coord, tile_size, padding, board_size))
+                                .spawn(item_bundle(
+                                    coord,
+                                    tile_size,
+                                    &tiles_assets,
+                                    padding,
+                                    board_size,
+                                ))
                                 .with_children(|parent| {
-                                    let cover = parent.spawn(cover(tile_size, padding, &tiles_assets)).id();
+                                    let cover =
+                                        parent.spawn(cover(tile_size, padding, &tiles_assets)).id();
                                     covers.insert(coord, cover);
                                 })
                                 .id(),
@@ -715,9 +735,9 @@ fn setup_board_options(
 
     commands.insert_resource(PendingNewRunSetup::default());
 
-    // 预留加载瓷砖资源
+    // 加载瓷砖资源
     let tiles_texture = asset_server.load("sprites/tiles.png");
-    let tiles_layout = TextureAtlasLayout::from_grid(UVec2::splat(16), 3, 1, None, None);
+    let tiles_layout = TextureAtlasLayout::from_grid(UVec2::splat(16), 8, 1, None, None);
     let tiles_texture_atlas_layout = textures_atlas_layouts.add(tiles_layout);
     commands.insert_resource(TilesAssets {
         texture: tiles_texture,

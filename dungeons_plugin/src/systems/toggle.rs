@@ -1,7 +1,7 @@
 use bevy::log;
 use bevy::prelude::*;
 
-use crate::components::{Coordinates, Enemy, EnemyNeighbor, Grass, Treasure, OutWay, Uncover};
+use crate::components::{Coordinates, Enemy, EnemyNeighbor, Grass, OutWay, Treasure, Uncover};
 
 pub fn uncover_tile(
     mut commands: Commands,
@@ -18,14 +18,14 @@ pub fn uncover_tile(
     for (entity, parent) in children.iter() {
         commands.entity(entity).despawn();
 
-        let (_coordinates, enemy, enemy_neighbor, grass, treasure, out_way) = match query.get(parent.0)
-        {
-            Ok(v) => v,
-            Err(e) => {
-                log::error!("Error getting tile: {:?}", e);
-                continue;
-            }
-        };
+        let (_coordinates, enemy, enemy_neighbor, grass, treasure, out_way) =
+            match query.get(parent.0) {
+                Ok(v) => v,
+                Err(e) => {
+                    log::error!("Error getting tile: {:?}", e);
+                    continue;
+                }
+            };
 
         if enemy.is_some() {}
 

@@ -3,14 +3,19 @@ use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
 use crate::components::{OutWay, TriggerRemaining};
-use crate::resources::board_option::TileSize;
+use crate::resources::{TileSize, TilesAssets};
 
 pub fn out_way_bundle(
     coord: Coordinates,
     tile_size: TileSize,
+    tiles_assets: &TilesAssets,
     padding: u32,
     board_size: Vec3,
 ) -> impl Bundle {
+    let atlas = TextureAtlas {
+        layout: tiles_assets.atlas_layout.clone(),
+        index: 3,
+    };
     return (
         Name::new(format!("Tile_{}", coord)),
         Transform::from_xyz(
@@ -21,7 +26,8 @@ pub fn out_way_bundle(
             1.0,
         ),
         Sprite {
-            color: Color::srgb(0.0, 0.0, 140.0),
+            image: tiles_assets.texture.clone(),
+            texture_atlas: Some(atlas),
             custom_size: Some(Vec2::new(
                 (tile_size.width - padding) as f32,
                 (tile_size.height - padding) as f32,

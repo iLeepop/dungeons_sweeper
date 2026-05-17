@@ -17,7 +17,11 @@ pub struct EffectEntry {
 
 impl EffectEntry {
     /// 构造一条效果；`effect` 为任意实现了 [`EffectBehavior`] 的类型。
-    pub fn new(priority: i16, trigger: EffectTrigger, effect: impl EffectBehavior + 'static) -> Self {
+    pub fn new(
+        priority: i16,
+        trigger: EffectTrigger,
+        effect: impl EffectBehavior + 'static,
+    ) -> Self {
         Self {
             priority,
             trigger,

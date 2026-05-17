@@ -3,10 +3,8 @@ use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
 use crate::components::{Grass, TriggerRemaining};
-use crate::effects::{
-    EffectEntry, EffectPhase, EffectTrigger, GrassHealPlayer, TileEffectLoader,
-};
-use crate::resources::board_option::TileSize;
+use crate::effects::{EffectEntry, EffectPhase, EffectTrigger, GrassHealPlayer, TileEffectLoader};
+use crate::resources::{TileSize, TilesAssets};
 
 // ---------------------------------------------------------------------------
 // 草地地块 Bundle 工厂
@@ -20,6 +18,7 @@ impl GrassTile {
     pub fn grass_bundle(
         coord: Coordinates,
         tile_size: TileSize,
+        tiles_assets: &TilesAssets,
         padding: u32,
         board_size: Vec3,
         grass_heal: i8,
@@ -33,6 +32,11 @@ impl GrassTile {
             ));
         }
 
+        let atlas = TextureAtlas {
+            layout: tiles_assets.atlas_layout.clone(),
+            index: 2,
+        };
+
         (
             Name::new(format!("Tile_{}", coord)),
             Transform::from_xyz(
@@ -43,7 +47,8 @@ impl GrassTile {
                 1.0,
             ),
             Sprite {
-                color: Color::srgb(0.0, 90.0, 0.0),
+                image: tiles_assets.texture.clone(),
+                texture_atlas: Some(atlas),
                 custom_size: Some(Vec2::new(
                     (tile_size.width - padding) as f32,
                     (tile_size.height - padding) as f32,

@@ -1,23 +1,23 @@
 use bevy::{color::palettes::tailwind, prelude::*};
 
-use crate::advance_stage_and_rebuild_board;
 use crate::AppState;
-use crate::components::view::View;
+use crate::advance_stage_and_rebuild_board;
 use crate::character::{RunCharacter, SelectedCharacter, UnlockedCharacters};
+use crate::components::view::View;
 use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
-use crate::effects::{grass_heal_amount_from_specs, ActiveEffectSpecs};
 use crate::effects::WorldEffectHost;
-use crate::resources::board::Board;
-use crate::resources::board_option::BoardOption;
+use crate::effects::{ActiveEffectSpecs, grass_heal_amount_from_specs};
 use crate::resources::DifficultyTuning;
-use crate::resources::enemy_assets::EnemyAssets;
-use crate::resources::tiles_assets::TilesAssets;
 use crate::resources::PlayerOptions;
 use crate::resources::StageConfig;
 use crate::resources::View2d;
+use crate::resources::board::Board;
+use crate::resources::board_option::BoardOption;
+use crate::resources::enemy_assets::EnemyAssets;
+use crate::resources::tiles_assets::TilesAssets;
 use crate::save::{
-    merge_run_gems_into_global, save_run_before_board_teardown, GlobalProfile, RunSaveAvailable,
-    SavePaths,
+    GlobalProfile, RunSaveAvailable, SavePaths, merge_run_gems_into_global,
+    save_run_before_board_teardown,
 };
 use crate::ui::plugins::next_level::components::{
     NextLevelContinueButton, NextLevelQuitMainMenuButton,
@@ -139,13 +139,7 @@ pub fn interact_with_next_level_quit_main_menu(
                 board.as_ref(),
                 board_options.as_ref(),
                 &enemy_health,
-                (
-                    &player.0,
-                    &player.1,
-                    &player.2,
-                    &player.3,
-                    &player.4,
-                ),
+                (&player.0, &player.1, &player.2, &player.3, &player.4),
                 &player.5,
                 &player.6,
                 view2d.as_ref(),

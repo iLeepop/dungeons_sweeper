@@ -2,13 +2,12 @@ use bevy::ecs::bundle::Bundle;
 use bevy::prelude::*;
 
 use crate::components::{Coordinates, Damage, Enemy, Health, TriggerRemaining};
-use crate::resources::board_option::TileSize;
-use crate::resources::enemy_assets::EnemyAssets;
-use crate::resources::enemy_type::EnemyType;
+use crate::resources::{EnemyAssets, EnemyType, TileSize, TilesAssets};
 
 pub fn enemy_bundle(
     coord: Coordinates,
     tile_size: TileSize,
+    tiles_assets: &TilesAssets,
     padding: u32,
     board_size: Vec3,
     enemy_assets: &EnemyAssets,
@@ -18,6 +17,10 @@ pub fn enemy_bundle(
     let index = match enemy_assets.enemy_atlas_layout.get(&enemy_type) {
         Some(index) => *index as usize,
         None => 0,
+    };
+    let atlas = TextureAtlas {
+        layout: tiles_assets.atlas_layout.clone(),
+        index: 5,
     };
     return (
         Name::new(format!("Tile_{}", coord)),
@@ -29,7 +32,8 @@ pub fn enemy_bundle(
             1.0,
         ),
         Sprite {
-            color: Color::linear_rgb(0.95, 0.24, 0.12),
+            image: tiles_assets.texture.clone(),
+            texture_atlas: Some(atlas),
             custom_size: Some(Vec2::new(
                 (tile_size.width - padding) as f32,
                 (tile_size.height - padding) as f32,

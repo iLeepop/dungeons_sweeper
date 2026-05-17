@@ -3,18 +3,23 @@ use bevy::prelude::*;
 
 use crate::components::coordinates::Coordinates;
 use crate::components::{EnemyNeighbor, TriggerRemaining};
-use crate::resources::board_option::TileSize;
 use crate::resources::tile_map::enemy_neighbor_display_label;
+use crate::resources::{TileSize, TilesAssets};
 
 pub fn enemy_neighbor_bundle(
     coord: Coordinates,
     tile_size: TileSize,
+    tiles_assets: &TilesAssets,
     padding: u32,
     board_size: Vec3,
     // 邻格敌方 HP 总和（用于 enemy_neighbor_display_label）。
     hp_sum_display: u32,
     counter_font: &Handle<Font>,
 ) -> impl Bundle {
+    let atlas = TextureAtlas {
+        layout: tiles_assets.atlas_layout.clone(),
+        index: 1,
+    };
     return (
         TriggerRemaining::zero(),
         Name::new(format!("Tile_{}", coord)),
@@ -26,7 +31,8 @@ pub fn enemy_neighbor_bundle(
             1.0,
         ),
         Sprite {
-            color: Color::linear_rgb(0.35, 0.24, 0.12),
+            image: tiles_assets.texture.clone(),
+            texture_atlas: Some(atlas),
             custom_size: Some(Vec2::new(
                 (tile_size.width - padding) as f32,
                 (tile_size.height - padding) as f32,
