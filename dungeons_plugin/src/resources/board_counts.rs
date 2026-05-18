@@ -21,16 +21,14 @@ pub const SPAWN_RESERVED: u32 = 1;
 pub fn map_side_for_stage(stage: u32) -> u32 {
     let s = stage.max(1);
     match s {
-        1 => 7,
-        2..=3 => 9,
-        4..=5 => 12,
-        6..=7 => 13,
+        1 => 8,
+        2..=3 => 10,
+        4..=5 => 13,
+        6..=7 => 14,
         8..=10 => 17,
         11..=13 => 18,
-        14..=16 => 21,
-        17..=19 => 22,
         // 之后每 2 关 +1 边长，上限 1000，避免单局过大。
-        _ => (22 + (s.saturating_sub(19)) / 2).min(1000),
+        _ => (18 + (s.saturating_sub(19)) + (s.saturating_sub(19)) * 2).min(1000),
     }
 }
 
