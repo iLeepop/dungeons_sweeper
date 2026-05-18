@@ -51,15 +51,15 @@ pub fn build_hud(mut commands: Commands, ui_assets: Res<UiAssets>) -> Entity {
                     Transform::from_xyz(0., 0., 1.),
                     HPBar,
                 ),
-                (
-                    HPProgressBar,
-                    Sprite {
-                        color: Color::srgb(0.85, 0.1, 0.1),
-                        custom_size: Some(Vec2::new(100.0, 6.0)),
-                        ..Default::default()
-                    },
-                    Transform::from_xyz(0., 0., 1.),
-                )
+                // (
+                //     HPProgressBar,
+                //     Sprite {
+                //         color: Color::srgb(0.85, 0.1, 0.1),
+                //         custom_size: Some(Vec2::new(100.0, 6.0)),
+                //         ..Default::default()
+                //     },
+                //     Transform::from_xyz(0., 0., 1.),
+                // )
             ],
         ))
         .id();
