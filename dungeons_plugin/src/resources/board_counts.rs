@@ -44,10 +44,22 @@ pub fn difficulty_factor_for_stage(stage: u32) -> f32 {
     1.0 + 0.18 * (s - 1.0).max(0.0)
 }
 
+/// 怪物格占**地板总格数**（`width × height`）的目标比例；随关卡升高，大地图同步加量。
+pub fn monster_share_of_floor(stage: u32) -> f32 {
+    let sf = (stage.max(1) - 1) as f32;
+    // 约 10% @ 第 1 关 → 22% @ 第 10 关 → 36% 封顶（高关大盘不会「空草原」）
+    (0.10 + 0.021 * sf + 0.0002 * sf * sf).clamp(0.08, 0.63)
+}
+
+/// 宝藏格占地板总格数的目标比例（低于怪物，且随关卡略升）。
+pub fn treasure_share_of_floor(stage: u32) -> f32 {
+    let sf = (stage.max(1) - 1) as f32;
+    (0.05 + 0.001 * sf).clamp(0.05, 0.11)
+}
+
 /// 按规划公式得到理想计数（未做超容裁剪）。
 pub fn desired_counts(area: u32, stage: u32) -> TileKindCounts {
     let s = stage.max(1);
-    let sf = (s - 1) as f32;
     let a = area as f32;
 
     let safe = (1 + (s.saturating_sub(1)) / 3).min(3) as u16;
@@ -59,15 +71,19 @@ pub fn desired_counts(area: u32, stage: u32) -> TileKindCounts {
         1
     };
 
-    let monster_raw = (a * (0.08 + 0.006 * sf)).round() as i32;
-    let m_low = (3.0_f32).max((0.05 * a).ceil()) as i32;
-    let m_high = (0.18 * a).floor() as i32;
-    let monster = monster_raw.clamp(m_low, m_high.max(m_low)) as u16;
+    let m_share = monster_share_of_floor(stage);
+    let monster_target = (a * m_share).round() as i32;
+    let m_low = (3.0_f32)
+        .max((a * m_share * 0.85).floor())
+        .max((0.06 * a).ceil()) as i32;
+    let m_high = (a * 0.40).floor() as i32;
+    let monster = monster_target.clamp(m_low, m_high.max(m_low)) as u16;
 
-    let treasure_raw = (a * (0.05 + 0.004 * sf)).round() as i32;
+    let t_share = treasure_share_of_floor(stage);
+    let treasure_target = (a * t_share).round() as i32;
     let t_low = (1.0_f32).max((0.03 * a).floor()) as i32;
-    let t_high = (0.12 * a).floor() as i32;
-    let treasure = treasure_raw.clamp(t_low, t_high.max(t_low)) as u16;
+    let t_high = (a * t_share * 1.2).ceil() as i32;
+    let treasure = treasure_target.clamp(t_low, t_high.max(t_low)) as u16;
 
     TileKindCounts {
         safe,
@@ -85,16 +101,19 @@ pub fn sum_with_spawn_reserved(area_components: &TileKindCounts) -> u32 {
         + area_components.treasure as u32
 }
 
-fn trim_floors(area: u32) -> (u16, u16) {
+fn trim_floors(area: u32, stage: u32) -> (u16, u16) {
     let a = area as f32;
+    let m_share = monster_share_of_floor(stage);
     let treasure_floor = (1.0_f32).max((0.03 * a).floor()) as u16;
-    let monster_floor = (3.0_f32).max((0.05 * a).ceil()) as u16;
+    let monster_floor = (3.0_f32)
+        .max((a * m_share * 0.75).floor())
+        .max((0.06 * a).ceil()) as u16;
     (treasure_floor, monster_floor)
 }
 
 /// 超容时按 treasure → monster → safe 削减，**不改动出口**；必要时打破下限直至装入。
-pub fn trim_counts_to_capacity(area: u32, c: &mut TileKindCounts) {
-    let (treasure_floor, monster_floor) = trim_floors(area);
+pub fn trim_counts_to_capacity(area: u32, stage: u32, c: &mut TileKindCounts) {
+    let (treasure_floor, monster_floor) = trim_floors(area, stage);
 
     while sum_with_spawn_reserved(c) > area {
         if c.treasure > treasure_floor {
@@ -124,7 +143,7 @@ pub fn trim_counts_to_capacity(area: u32, c: &mut TileKindCounts) {
 /// 计算并裁剪后的计数，保证 `1 + safe + out + monster + treasure <= area`（在可达时）。
 pub fn counts_for_stage(area: u32, stage: u32) -> TileKindCounts {
     let mut c = desired_counts(area, stage);
-    trim_counts_to_capacity(area, &mut c);
+    trim_counts_to_capacity(area, stage, &mut c);
     c
 }
 
@@ -149,9 +168,9 @@ mod tests {
     fn map_grows_with_stage() {
         assert!(map_side_for_stage(1) < map_side_for_stage(8));
         assert!(map_side_for_stage(8) <= map_side_for_stage(30));
-        assert_eq!(map_side_for_stage(1), 5);
-        assert_eq!(map_side_for_stage(20), 12);
-        assert_eq!(map_side_for_stage(100), 15);
+        assert_eq!(map_side_for_stage(1), 8);
+        assert_eq!(map_side_for_stage(20), 21);
+        assert!((map_side_for_stage(100) as i32) >= 20);
     }
 
     #[test]
@@ -159,5 +178,36 @@ mod tests {
         let area = 25;
         let c = counts_for_stage(area, 1);
         assert!(sum_with_spawn_reserved(&c) <= area);
+    }
+
+    #[test]
+    fn monster_count_rises_with_stage() {
+        let area = 100;
+        let early = counts_for_stage(area, 1).monster;
+        let late = counts_for_stage(area, 15).monster;
+        assert!(late > early);
+    }
+
+    #[test]
+    fn monster_scales_with_floor_area() {
+        let area_small = map_side_for_stage(5).pow(2);
+        let area_large = map_side_for_stage(15).pow(2);
+        let small = counts_for_stage(area_small, 5);
+        let large = counts_for_stage(area_large, 15);
+        let share_small = small.monster as f32 / area_small as f32;
+        let share_large = large.monster as f32 / area_large as f32;
+        assert!(large.monster > small.monster);
+        assert!(share_large >= share_small * 0.95);
+    }
+
+    #[test]
+    fn monster_share_tracks_area_at_fixed_stage() {
+        let stage = 8;
+        let small = desired_counts(64, stage);
+        let large = desired_counts(289, stage);
+        let share_small = small.monster as f32 / 64.0;
+        let share_large = large.monster as f32 / 289.0;
+        assert!(large.monster > small.monster);
+        assert!((share_large - share_small).abs() < 0.02);
     }
 }

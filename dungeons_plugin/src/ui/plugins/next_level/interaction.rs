@@ -7,8 +7,6 @@ use crate::components::view::View;
 use crate::components::{Damage, Defense, Enemy, Gem, GoldCoin, Health, Player};
 use crate::effects::WorldEffectHost;
 use crate::effects::{ActiveEffectSpecs, grass_heal_amount_from_specs};
-use crate::resources::DifficultyTuning;
-use crate::resources::PlayerOptions;
 use crate::resources::StageConfig;
 use crate::resources::View2d;
 use crate::resources::board::Board;
@@ -34,8 +32,6 @@ pub fn interact_with_next_level_continue(
     mut stage: ResMut<StageConfig>,
     enemy_assets: Res<EnemyAssets>,
     tiles_assets: Res<TilesAssets>,
-    player_options: Res<PlayerOptions>,
-    tuning: Res<DifficultyTuning>,
     board: Res<Board>,
     world_hosts: Query<Entity, With<WorldEffectHost>>,
     paths: Res<SavePaths>,
@@ -80,8 +76,6 @@ pub fn interact_with_next_level_continue(
                 &mut *stage,
                 enemy_assets.as_ref(),
                 tiles_assets.as_ref(),
-                player_options.as_ref(),
-                tuning.as_ref(),
                 &world_hosts,
                 board_ent,
                 grass_heal,
